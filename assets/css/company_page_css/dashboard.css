@@ -1,0 +1,18 @@
+.dash-table { width: 100%; border-collapse: collapse; }
+
+.dash-table th {
+    text-align: left;
+    font-size: 12px;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+}
+
+.dash-table td {
+    padding: 14px 12px;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+}
+
+.dash-table tr:last-child td { border-bottom: none; }
