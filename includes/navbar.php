@@ -1,30 +1,35 @@
 <?php
-// -----------------------------------------------------------------
-// navbar.php
-// Purpose : Main menu, changes based on logged-in role.
-// Included right after header.php.
-// -----------------------------------------------------------------
-$role = $_SESSION['role'] ?? 'guest'; // guest | seeker | company | admin
+$role = $_SESSION['role'] ?? 'guest';
 ?>
 <nav class="navbar">
-    <ul>
-        <li><a href="/index.php">Home</a></li>
+    <div class="container navbar-inner">
+        <a href="/index.php" class="logo">
+            <span class="logo-circle">JP</span>
+            JobPortal.lk
+        </a>
 
-        <?php if ($role === 'guest'): ?>
-            <li><a href="/auth/login.php">Login</a></li>
-            <li><a href="/auth/register.php">Register</a></li>
-        <?php elseif ($role === 'seeker'): ?>
-            <li><a href="/seeker/jobs/index.php">Find Jobs</a></li>
-            <li><a href="/seeker/applications/index.php">My Applications</a></li>
-        <?php elseif ($role === 'company'): ?>
-            <li><a href="/company/jobs/index.php">My Jobs</a></li>
-            <li><a href="/company/applications/index.php">Applications</a></li>
-        <?php elseif ($role === 'admin'): ?>
-            <li><a href="/admin/dashboard.php">Dashboard</a></li>
-        <?php endif; ?>
+        <ul class="nav-links">
+            <li><a href="/index.php">Home</a></li>
+            <li><a href="/seeker/jobs/index.php">Jobs</a></li>
+            <li><a href="#">Categories</a></li>
+            <li><a href="#">About Us</a></li>
+            <li><a href="#">Contact Us</a></li>
+        </ul>
 
-        <?php if ($role !== 'guest'): ?>
-            <li><a href="/auth/logout.php">Logout</a></li>
-        <?php endif; ?>
-    </ul>
+        <div class="auth-buttons">
+            <?php if ($role === 'guest'): ?>
+                <a href="/auth/login.php" class="btn btn-outline">Login</a>
+                <a href="/auth/register.php" class="btn btn-primary">Register</a>
+            <?php elseif ($role === 'seeker'): ?>
+                <a href="/seeker/applications/index.php">My Applications</a>
+                <a href="/auth/logout.php" class="btn btn-outline">Logout</a>
+            <?php elseif ($role === 'company'): ?>
+                <a href="/company/jobs/index.php">My Jobs</a>
+                <a href="/auth/logout.php" class="btn btn-outline">Logout</a>
+            <?php elseif ($role === 'admin'): ?>
+                <a href="/admin/dashboard.php">Dashboard</a>
+                <a href="/auth/logout.php" class="btn btn-outline">Logout</a>
+            <?php endif; ?>
+        </div>
+    </div>
 </nav>
