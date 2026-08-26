@@ -1,19 +1,11 @@
 <?php
-// -----------------------------------------------------------------
-// Database Connection
-// Purpose : Every other PHP file includes this to get $conn
-// -----------------------------------------------------------------
-
 $host = "localhost";
-$dbname = "online_job_portal_db";
-$username = "root";
-$password = "";
+$db_name = "test_company_part_db";
+$db_user = "root";
+$db_pass = "";
 
-try {
-    $conn = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);
-    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch (PDOException $e) {
-    die("Database connection failed: " . $e->getMessage());
+$conn = mysqli_connect($host, $db_user, $db_pass, $db_name);
+
+if (!$conn) {
+    die("Database connection failed: " . mysqli_connect_error());
 }
-
-// TODO: move these credentials to a .env file for real projects
