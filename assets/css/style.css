@@ -1,8 +1,0 @@
-/* -----------------------------------------------------------------
-   style.css - Global site styles
-   ----------------------------------------------------------------- */
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: Arial, sans-serif; }
-.container { max-width: 1100px; margin: 0 auto; padding: 20px; }
-
-/* TODO: styles for .site-header, .navbar, .site-footer, forms, buttons */
