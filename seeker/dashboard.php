@@ -13,8 +13,8 @@ $profile_completion = get_profile_completion($conn, $seeker_id);
 $recent_applications = get_recent_applications($conn, $seeker_id, 5);
 
 $page_title = "Dashboard";
-$page_css = "../assets/css/seeker_page_css/dashboard.css";
-$page_js = "../assets/js/seeker_page_js/dashboard.js";
+$page_css = "seeker_page_css/dashboard.css";
+$page_js = "seeker_page_js/dashboard.js";
 require_once '../includes/seeker-header.php';
 require_once '../includes/seeker-sidebar.php';
 ?>
@@ -69,4 +69,4 @@ require_once '../includes/seeker-sidebar.php';
     </table>
 </div>
 
-<?php require_once '../includes/footer.php'; ?>
+<?php require_once '../includes/seeker-footer.php'; ?>

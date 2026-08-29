@@ -14,9 +14,9 @@ if (!isset($page_css)) $page_css = "";
 <title><?= e($page_title) ?> | JobPortal.lk</title>
 
 <!-- shared base styles (sidebar, topbar, layout) -->
-<link rel="stylesheet" href="/Online-Job-Portal/assets/css/seeker-base.css">
+<link rel="stylesheet" href="/Online-Job-Portals/assets/css/seeker_page_css/base.css">
 <?php if ($page_css): ?>
-<link rel="stylesheet" href="/Online-Job-Portal/assets/css/<?= e($page_css) ?>">
+<link rel="stylesheet" href="/Online-Job-Portals/assets/css/<?= e($page_css) ?>">
 <?php endif; ?>
 </head>
 <body>
@@ -25,8 +25,8 @@ if (!isset($page_css)) $page_css = "";
 <div class="topbar">
     <div class="topbar-brand">JobPortal.lk</div>
     <nav class="topbar-links">
-        <a href="/Online-Job-Portal/index.php">Home</a>
-        <a href="/Online-Job-Portal/seeker/browse-jobs.php">Jobs</a>
+        <a href="/Online-Job-Portals/index.php">Home</a>
+        <a href="/Online-Job-Portals/seeker/browse-jobs.php">Jobs</a>
         <a href="#">Categories</a>
         <a href="#">About Us</a>
         <a href="#">Contact</a>
