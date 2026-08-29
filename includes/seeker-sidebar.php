@@ -1,34 +1,40 @@
-<!-- includes/seeker-sidebar.php -->
 <?php
-$current_page = basename($_SERVER['PHP_SELF']);
+// includes/seeker-sidebar.php
+// Include this right after includes/header.php, inside the <div class="app-layout">.
+
+$current = basename($_SERVER['PHP_SELF']);
+
+function nav_active($file, $current) {
+    return $file === $current ? 'active' : '';
+}
 ?>
 <aside class="sidebar">
-    <ul>
-        <li class="<?php echo ($current_page == 'index.php') ? 'active' : ''; ?>">
-            <a href="/Online-Job-Portals/seeker/index.php">
-                <i class="fa-solid fa-gauge"></i> Dashboard
-            </a>
+    <ul class="sidebar-menu">
+        <li class="<?= nav_active('dashboard.php', $current) ?>">
+            <a href="dashboard.php">📊 Dashboard</a>
         </li>
-        <li><a href="/Online-Job-Portals/seeker/jobs/browse.php">
-            <i class="fa-solid fa-briefcase"></i> Browse Jobs
-        </a></li>
-        <li><a href="/Online-Job-Portals/seeker/applications/index.php">
-            <i class="fa-solid fa-file-lines"></i> Applications
-        </a></li>
-        <li><a href="/Online-Job-Portals/seeker/interviews/index.php">
-            <i class="fa-solid fa-calendar-days"></i> Interviews
-        </a></li>
-        <li><a href="/Online-Job-Portals/seeker/profile/index.php">
-            <i class="fa-solid fa-user"></i> My Profile
-        </a></li>
-        <li><a href="/Online-Job-Portals/seeker/cv/index.php">
-            <i class="fa-solid fa-file-invoice"></i> My CV
-        </a></li>
-        <li><a href="/Online-Job-Portals/seeker/alerts/index.php">
-            <i class="fa-solid fa-bell"></i> Job Alerts
-        </a></li>
-        <li><a href="/Online-Job-Portals/seeker/settings.php">
-            <i class="fa-solid fa-gear"></i> Settings
-        </a></li>
+        <li class="<?= nav_active('browse-jobs.php', $current) ?>">
+            <a href="browse-jobs.php">💼 Browse Jobs</a>
+        </li>
+        <li class="<?= nav_active('applications.php', $current) ?>">
+            <a href="applications.php">✅ Applications</a>
+        </li>
+        <li class="<?= nav_active('interviews.php', $current) ?>">
+            <a href="interviews.php">📅 Interviews</a>
+        </li>
+        <li class="<?= nav_active('profile.php', $current) ?>">
+            <a href="profile.php">👤 My Profile</a>
+        </li>
+        <li class="<?= nav_active('my-cv.php', $current) ?>">
+            <a href="my-cv.php">📄 My CV</a>
+        </li>
+        <li class="<?= nav_active('job-alerts.php', $current) ?>">
+            <a href="job-alerts.php">🔔 Job Alerts</a>
+        </li>
+        <li class="<?= nav_active('settings.php', $current) ?>">
+            <a href="settings.php">⚙️ Settings</a>
+        </li>
     </ul>
 </aside>
+
+<main class="main-content">

@@ -1,15 +1,9 @@
-<?php
-// -----------------------------------------------------------------
-// footer.php
-// Purpose : Closes the HTML document. Included LAST on every page.
-// </body>/</html> exist ONLY here.
-// -----------------------------------------------------------------
-?>
-<footer class="site-footer">
-    <!-- TODO: copyright text, footer links -->
-    <p>&copy; <?php echo date("Y"); ?> Job Portal. All rights reserved.</p>
-</footer>
+</main>
+</div>
 
-<script src="/assets/js/script.js"></script>
+<script src="assets/js/script.js"></script>
+<?php if (isset($page_js)) : ?>
+<script src="assets/js/<?php echo $page_js; ?>"></script>
+<?php endif; ?>
 </body>
 </html>
