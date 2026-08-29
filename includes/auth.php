@@ -9,18 +9,16 @@ if (!isset($_SESSION['company_id'])) {
 
 $company_id = $_SESSION['company_id'];
 
-function requireLogin() {
-    if (!isset($_SESSION['user_id'])) {
-        header("Location: /auth/login.php");
-        exit();
-    }
+// Not logged in -> send to login page
+if (!isset($_SESSION['user_id'])) {
+    header("Location: /Online-Job-Portal/auth/login.php");
+    exit;
 }
 
-function requireRole($role) {
-    requireLogin();
-    if (($_SESSION['role'] ?? '') !== $role) {
-        die("Access denied.");
-    }
+// Logged in but not a job seeker -> block access
+if ($_SESSION['role'] !== 'job_seeker') {
+    header("Location: /Online-Job-Portal/index.php");
+    exit;
 }
 
 ?>
