@@ -8,3 +8,19 @@ if (!isset($_SESSION['company_id'])) {
 }
 
 $company_id = $_SESSION['company_id'];
+
+function requireLogin() {
+    if (!isset($_SESSION['user_id'])) {
+        header("Location: /auth/login.php");
+        exit();
+    }
+}
+
+function requireRole($role) {
+    requireLogin();
+    if (($_SESSION['role'] ?? '') !== $role) {
+        die("Access denied.");
+    }
+}
+
+?>
