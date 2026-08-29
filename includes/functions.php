@@ -493,5 +493,9 @@ function delete_user_account($conn, $user_id) {
     return mysqli_stmt_execute($stmt);
 }
 
-// TODO: add more helpers as the app grows
+// e() - shorthand HTML-escape helper for use in templates (header.php, footer.php, etc.)
+function e($string) {
+    return htmlspecialchars($string ?? '', ENT_QUOTES, 'UTF-8');
+}
+
 ?>

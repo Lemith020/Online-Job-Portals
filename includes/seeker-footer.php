@@ -13,7 +13,7 @@ if (!isset($page_js)) $page_js = "";
 </footer>
 
 <?php if ($page_js): ?>
-<script src="/Online-Job-Portal/assets/js/<?= e($page_js) ?>"></script>
+<script src="/Online-Job-Portals/assets/js/<?= e($page_js) ?>"></script>
 <?php endif; ?>
 </body>
 </html>
