@@ -1,0 +1,292 @@
+/* assets/css/seeker-base.css
+   Shared layout used on every seeker page: topbar, sidebar, cards, badges, buttons.
+   Load this FIRST on every page, then load the page's own CSS after it. */
+
+:root {
+    --navy: #101a3d;
+    --blue: #2f6fed;
+    --blue-light: #eaf1ff;
+    --text-dark: #1f2430;
+    --text-muted: #6b7280;
+    --border: #e5e7eb;
+    --bg: #f4f6fb;
+    --radius: 8px;
+    --green: #16a34a;
+    --red: #dc2626;
+    --gray: #6b7280;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text-dark);
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+/* ---------- Top bar ---------- */
+.topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--navy);
+    color: #fff;
+    padding: 14px 24px;
+    border-radius: var(--radius);
+    margin: 12px;
+}
+
+.topbar-brand {
+    font-weight: 700;
+    font-size: 18px;
+}
+
+.topbar-links {
+    display: flex;
+    gap: 20px;
+}
+
+.topbar-links a {
+    color: #d7ddef;
+    font-size: 14px;
+}
+
+.topbar-links a:hover {
+    color: #fff;
+}
+
+.topbar-user {
+    font-size: 14px;
+}
+
+/* ---------- Layout ---------- */
+.app-layout {
+    display: flex;
+    gap: 16px;
+    padding: 0 12px 24px;
+}
+
+/* ---------- Sidebar ---------- */
+.sidebar {
+    width: 220px;
+    background: #fff;
+    border-radius: var(--radius);
+    padding: 12px;
+    height: fit-content;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.sidebar-menu {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.sidebar-menu li {
+    border-radius: var(--radius);
+    margin-bottom: 4px;
+}
+
+.sidebar-menu li a {
+    display: block;
+    padding: 10px 14px;
+    font-size: 14px;
+    color: var(--text-dark);
+    border-radius: var(--radius);
+}
+
+.sidebar-menu li:hover a {
+    background: var(--blue-light);
+}
+
+.sidebar-menu li.active a {
+    background: var(--blue);
+    color: #fff;
+    font-weight: 600;
+}
+
+/* ---------- Main content ---------- */
+.main-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.page-title {
+    font-size: 22px;
+    margin: 0 0 16px;
+}
+
+/* ---------- Cards ---------- */
+.card {
+    background: #fff;
+    border-radius: var(--radius);
+    padding: 18px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.card-label {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+}
+
+.card-value {
+    font-size: 26px;
+    font-weight: 700;
+}
+
+.card-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+/* ---------- Table ---------- */
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th,
+td {
+    text-align: left;
+    padding: 10px 8px;
+    font-size: 14px;
+    border-bottom: 1px solid var(--border);
+}
+
+th {
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 13px;
+}
+
+/* ---------- Badges ---------- */
+.badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+}
+
+.badge-pending,
+.badge-scheduled {
+    background: var(--blue);
+}
+
+.badge-reviewed {
+    background: #f59e0b;
+}
+
+.badge-accepted,
+.badge-completed {
+    background: var(--green);
+}
+
+.badge-rejected,
+.badge-cancelled {
+    background: var(--red);
+}
+
+.badge-default {
+    background: var(--gray);
+}
+
+/* ---------- Buttons ---------- */
+.btn {
+    display: inline-block;
+    padding: 8px 16px;
+    border-radius: var(--radius);
+    border: none;
+    font-size: 14px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.btn-primary {
+    background: var(--blue);
+    color: #fff;
+}
+
+.btn-primary:hover {
+    background: #1f5adb;
+}
+
+.btn-danger {
+    background: #fff;
+    color: var(--red);
+    border: 1px solid var(--red);
+}
+
+.btn-danger:hover {
+    background: #fee2e2;
+}
+
+.btn-outline {
+    background: #fff;
+    color: var(--blue);
+    border: 1px solid var(--blue);
+}
+
+/* ---------- Forms ---------- */
+input[type="text"],
+input[type="password"],
+input[type="date"],
+input[type="file"],
+select,
+textarea {
+    width: 100%;
+    padding: 9px 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-family: inherit;
+}
+
+label {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    display: block;
+}
+
+.form-group {
+    margin-bottom: 14px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+@media (max-width: 800px) {
+    .app-layout {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 100%;
+    }
+
+    .card-grid,
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}
