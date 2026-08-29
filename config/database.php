@@ -1,6 +1,6 @@
 <?php
 $host = "localhost";
-$db_name = "test_company_part_db";
+$db_name = "online_job_portal_db";
 $db_user = "root";
 $db_pass = "";
 
