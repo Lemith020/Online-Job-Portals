@@ -1,10 +1,9 @@
+
 <?php
-session_start();
 
-
-if (!isset($_SESSION['company_id'])) {
-    $_SESSION['company_id'] = 1;
-    $_SESSION['user_id']    = 1;
+// Start session if not already started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
 }
 
 $company_id = $_SESSION['company_id'];
