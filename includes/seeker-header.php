@@ -14,7 +14,7 @@ if (!isset($page_css)) $page_css = "";
 <title><?= e($page_title) ?> | JobPortal.lk</title>
 
 <!-- shared base styles (sidebar, topbar, layout) -->
-<link rel="stylesheet" href="../assets/css/seeker_page_css/base.css">
+<link rel="stylesheet" href="../assets/css/seeker_page_css/base.css?v=<?= time() ?>">
 <?php if ($page_css): ?>
 <link rel="stylesheet" href="<?= clean($page_css) ?>">
 <?php endif; ?>

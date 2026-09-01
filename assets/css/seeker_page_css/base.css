@@ -276,6 +276,16 @@ label {
     gap: 16px;
 }
 
+/* ---------- Footer ---------- */
+.site-footer {
+    text-align: center;
+    padding: 24px;
+    font-size: 14px;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border);
+    margin-top: 24px;
+}
+
 @media (max-width: 800px) {
     .app-layout {
         flex-direction: column;
