@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Secure user login interface with email, password, and social authentication options.">
+  <title>Login - Welcome Back</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="login-wrapper">
+    <div class="login-card" id="loginCard">
+      <!-- Header Section -->
+      <div class="card-header">
+        <h1 class="title">Welcome Back!</h1>
+        <p class="subtitle">Log in to your account.</p>
+      </div>
+
+      <!-- Login Form -->
+      <form id="loginForm" class="login-form" novalidate>
+        <!-- Email Input Group -->
+        <div class="form-group" id="emailGroup">
+          <div class="input-wrapper">
+            <span class="input-icon">
+              <!-- Envelope Mail Icon -->
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+              </svg>
+            </span>
+            <input 
+              type="email" 
+              id="email" 
+              name="email" 
+              class="form-input" 
+              placeholder="Email Address" 
+              autocomplete="email"
+              required
+            >
+          </div>
+          <span class="error-msg" id="emailError"></span>
+        </div>
+
+        <!-- Password Input Group -->
+        <div class="form-group" id="passwordGroup">
+          <div class="input-wrapper">
+            <span class="input-icon">
+              <!-- Lock Password Icon -->
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+            </span>
+            <input 
+              type="password" 
+              id="password" 
+              name="password" 
+              class="form-input" 
+              placeholder="Password" 
+              autocomplete="current-password"
+              required
+            >
+          </div>
+          <span class="error-msg" id="passwordError"></span>
+        </div>
+
+        <!-- Options Row: Remember Me & Forgot Password -->
+        <div class="options-row">
+          <label class="remember-label" for="rememberMe">
+            <input type="checkbox" id="rememberMe" name="rememberMe" class="custom-checkbox">
+            <span class="checkbox-box">
+              <svg class="check-icon" width="10" height="8" viewBox="0 0 10 8" fill="none">
+                <path d="M1 4L3.8 7L9 1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            <span class="remember-text">Remember Me</span>
+          </label>
+          <a href="#forgot-password" class="forgot-password-link" id="forgotPasswordBtn">Forgot Password?</a>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="submit-btn" id="loginBtn">
+          <span class="btn-text">Log In</span>
+          <span class="btn-spinner" aria-hidden="true"></span>
+        </button>
+      </form>
+
+      <!-- Divider Section -->
+      <div class="divider-container">
+        <span class="divider-line"></span>
+        <span class="divider-text">Or log in with</span>
+        <span class="divider-line"></span>
+      </div>
+
+      <!-- Social Logins Group -->
+      <div class="social-login-group">
+        <!-- Google Button -->
+        <button type="button" class="social-btn google-btn" id="googleLogin" aria-label="Log in with Google">
+          <svg class="social-icon" width="16" height="16" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17Z"/>
+            <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.34 24 12 24Z"/>
+            <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15Z"/>
+            <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98Z"/>
+          </svg>
+          <span class="social-label">Google</span>
+        </button>
+
+        <!-- LinkedIn Button -->
+        <button type="button" class="social-btn linkedin-btn" id="linkedinLogin" aria-label="Log in with LinkedIn">
+          <svg class="social-icon" width="14" height="14" viewBox="0 0 24 24" fill="#ffffff">
+            <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/>
+          </svg>
+          <span class="social-label">LinkedIn</span>
+        </button>
+
+        <!-- Facebook Button -->
+        <button type="button" class="social-btn facebook-btn" id="facebookLogin" aria-label="Log in with Facebook">
+          <svg class="social-icon" width="14" height="14" viewBox="0 0 24 24" fill="#ffffff">
+            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+          </svg>
+          <span class="social-label">Facebook</span>
+        </button>
+      </div>
+
+      <!-- Footer Section -->
+      <div class="card-footer">
+        <p class="signup-prompt">
+          Don't have an account? <a href="#signup" class="signup-link" id="signUpLink">Sign up</a>
+        </p>
+      </div>
+
+      <!-- Toast Notification for Validation / Interaction Feedback -->
+      <div class="toast-notification" id="toastNotification" role="alert" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
