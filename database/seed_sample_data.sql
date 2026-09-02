@@ -1,140 +1,80 @@
--- ============================================================
--- Sample Seed Data for online_job_portal_db
--- Import meka phpMyAdmin eken karanna, table structure walata
--- passe (schema import kalata passe witharai run karanna).
--- Password okkomatama: "password123" (bcrypt hashed)
--- ============================================================
+-- ==========================================================
+-- JobPortal.lk - Sample Seed Data
+-- ==========================================================
 
--- --------------------------------------------------------
--- USERS  (1 = company, 2-6 = job seekers)
--- --------------------------------------------------------
-INSERT INTO `users` (`user_id`, `first_name`, `middle_name`, `last_name`, `email`, `password`, `phone`, `role`) VALUES
-(1, 'Dialog', '', 'Axiata PLC', 'hr@dialog.lk', '$2b$12$cgKXqju4LKG14SlSFQCYsOQW/B2QPikFs9XKT.b/RT5C6EHQfCQ0a', '0112345678', 'company'),
-(2, 'Kamal', '', 'Perera', 'kamal.perera@gmail.com', '$2b$12$cgKXqju4LKG14SlSFQCYsOQW/B2QPikFs9XKT.b/RT5C6EHQfCQ0a', '0771234567', 'job_seeker'),
-(3, 'Nethmi', '', 'Lakshan', 'nethmi.l@gmail.com', '$2b$12$cgKXqju4LKG14SlSFQCYsOQW/B2QPikFs9XKT.b/RT5C6EHQfCQ0a', '0712345678', 'job_seeker'),
-(4, 'Kasun', '', 'Wickramasinghe', 'kasun.w@gmail.com', '$2b$12$cgKXqju4LKG14SlSFQCYsOQW/B2QPikFs9XKT.b/RT5C6EHQfCQ0a', '0759876543', 'job_seeker'),
-(5, 'Sarah', '', 'Fernando', 'sarah.f@gmail.com', '$2b$12$cgKXqju4LKG14SlSFQCYsOQW/B2QPikFs9XKT.b/RT5C6EHQfCQ0a', '0723456789', 'job_seeker'),
-(6, 'Ravi', '', 'Bandara', 'ravi.b@gmail.com', '$2b$12$cgKXqju4LKG14SlSFQCYsOQW/B2QPikFs9XKT.b/RT5C6EHQfCQ0a', '0701122334', 'job_seeker');
+USE `online_job_portal_db`;
 
--- --------------------------------------------------------
--- COMPANY  (company_id = 1 → the mock-logged-in company)
--- --------------------------------------------------------
-INSERT INTO `company` (`company_id`, `user_id`, `company_name`, `industry_type`, `description`, `location`) VALUES
-(1, 1, 'Dialog Axiata PLC', 'Telecommunications', 'Sri Lanka\'s premier connectivity provider, building digital services for millions of customers.', 'Colombo, Sri Lanka');
+-- Users (Password is 'Password123!')
+INSERT INTO `users` (`id`, `name`, `email`, `password`, `role`, `phone`, `status`) VALUES
+(1, 'Admin Kamal Perera', 'admin@jobportal.lk', '$2y$10$eA32bLd48l7/mH8aL/bJae0g9UfQO4dJ9q4wHw2F7rA6H7zK0dY3y', 'admin', '+94 77 123 4567', 'Active'),
+(2, 'Dilshan Silva', 'dilshan.silva@gmail.com', '$2y$10$eA32bLd48l7/mH8aL/bJae0g9UfQO4dJ9q4wHw2F7rA6H7zK0dY3y', 'seeker', '+94 71 987 6543', 'Active'),
+(3, 'Virtusa HR Team', 'careers@virtusa.com', '$2y$10$eA32bLd48l7/mH8aL/bJae0g9UfQO4dJ9q4wHw2F7rA6H7zK0dY3y', 'company', '+94 11 234 5678', 'Active'),
+(4, 'Nadeesha Fernando', 'nadeesha.f@hotmail.com', '$2y$10$eA32bLd48l7/mH8aL/bJae0g9UfQO4dJ9q4wHw2F7rA6H7zK0dY3y', 'seeker', '+94 76 555 4321', 'Active'),
+(5, 'Dialog Axiata Careers', 'jobs@dialog.lk', '$2y$10$eA32bLd48l7/mH8aL/bJae0g9UfQO4dJ9q4wHw2F7rA6H7zK0dY3y', 'company', '+94 77 733 3333', 'Active'),
+(6, 'Kasun Jayawardena', 'kasun.j@yahoo.com', '$2y$10$eA32bLd48l7/mH8aL/bJae0g9UfQO4dJ9q4wHw2F7rA6H7zK0dY3y', 'seeker', '+94 70 111 2233', 'Suspended'),
+(7, 'WSO2 Recruitment', 'hr@wso2.com', '$2y$10$eA32bLd48l7/mH8aL/bJae0g9UfQO4dJ9q4wHw2F7rA6H7zK0dY3y', 'company', '+94 11 214 5345', 'Active'),
+(8, 'Anura Gunasekara', 'anura.g@gmail.com', '$2y$10$eA32bLd48l7/mH8aL/bJae0g9UfQO4dJ9q4wHw2F7rA6H7zK0dY3y', 'seeker', '+94 72 345 6789', 'Pending')
+ON DUPLICATE KEY UPDATE `name` = VALUES(`name`);
 
--- --------------------------------------------------------
--- CATEGORIES
--- --------------------------------------------------------
-INSERT INTO `categories` (`category_id`, `category_name`) VALUES
-(1, 'Software Development'),
-(2, 'Marketing'),
-(3, 'Data Science'),
-(4, 'Customer Service'),
-(5, 'Finance'),
-(6, 'Design'),
-(7, 'Human Resources'),
-(8, 'Sales');
+-- Job Seekers
+INSERT INTO `job_seekers` (`seeker_id`, `user_id`, `birth_day`, `phone`, `bio`, `location`, `experience_years`) VALUES
+(1, 2, '1996-05-14', '+94 71 987 6543', 'Full-stack developer proficient in React, PHP, and Node.js.', 'Colombo, Sri Lanka', 4),
+(2, 4, '1998-11-20', '+94 76 555 4321', 'UI/UX Designer with a passion for clean aesthetics and mobile design.', 'Kandy, Sri Lanka', 3),
+(3, 6, '2000-02-10', '+94 70 111 2233', 'Junior QA Engineer with manual testing experience.', 'Galle, Sri Lanka', 1),
+(4, 8, '1993-08-30', '+94 72 345 6789', 'DevOps Specialist experienced in AWS, Docker, and CI/CD pipelines.', 'Kurunegala, Sri Lanka', 6)
+ON DUPLICATE KEY UPDATE `location` = VALUES(`location`);
 
--- --------------------------------------------------------
--- COMPANY_CATEGORY  (Dialog tags itself under 3 categories)
--- --------------------------------------------------------
-INSERT INTO `company_category` (`company_id`, `category_id`) VALUES
-(1, 1),
-(1, 3),
-(1, 4);
+-- Companies
+INSERT INTO `companies` (`id`, `user_id`, `company_name`, `industry_type`, `location`, `owner_email`, `phone`, `description`, `status`) VALUES
+(1, 3, 'Virtusa (Pvt) Ltd', 'Information Technology', 'Colombo 07', 'careers@virtusa.com', '+94 11 234 5678', 'Global provider of digital engineering and IT services.', 'Approved'),
+(2, 5, 'Dialog Axiata PLC', 'Telecommunications', 'Colombo 02', 'jobs@dialog.lk', '+94 77 733 3333', 'Sri Lanka’s premier connectivity provider.', 'Approved'),
+(3, 7, 'WSO2 Lanka', 'Enterprise Software', 'Colombo 03', 'hr@wso2.com', '+94 11 214 5345', 'Open-source technology provider for modern enterprise solutions.', 'Approved'),
+(4, NULL, 'Apex Digital Media', 'Marketing & Advertising', 'Nugegoda', 'contact@apexdigital.lk', '+94 11 280 9988', 'Creative agency specializing in performance marketing.', 'Pending Approval'),
+(5, NULL, 'FastTrack Logistics', 'Supply Chain', 'Peliyagoda', 'support@fasttrack.lk', '+94 11 556 7890', 'Courier and freight logistics service.', 'Suspended')
+ON DUPLICATE KEY UPDATE `company_name` = VALUES(`company_name`);
 
--- --------------------------------------------------------
--- JOB_SEEKERS  (seeker_id 1-5 → user_id 2-6)
--- --------------------------------------------------------
-INSERT INTO `job_seekers` (`seeker_id`, `user_id`, `birth_day`, `phone`, `bio`, `status`) VALUES
-(1, 2, '1998-04-12', '0771234567', 'Full-stack developer with a passion for building scalable web apps.', 'not_hired'),
-(2, 3, '1997-09-03', '0712345678', 'UI/UX designer focused on clean, user-friendly interfaces.', 'not_hired'),
-(3, 4, '1999-01-21', '0759876543', 'Data enthusiast skilled in Python, SQL and visualization tools.', 'not_hired'),
-(4, 5, '2000-06-15', '0723456789', 'Recent graduate looking for a junior software engineering role.', 'not_hired'),
-(5, 6, '1996-11-30', '0701122334', 'QA engineer experienced in manual and automated testing.', 'not_hired');
+-- Categories
+INSERT INTO `categories` (`id`, `name`, `icon`, `job_count`) VALUES
+(1, 'Software Engineering', 'code', 142),
+(2, 'Cloud & DevOps', 'cloud', 64),
+(3, 'Design & Creative', 'pen-nib', 48),
+(4, 'Marketing & Sales', 'chart-line', 52),
+(5, 'Accounting & Finance', 'sack-dollar', 38),
+(6, 'Healthcare & Medical', 'heart-pulse', 29),
+(7, 'Human Resources', 'users', 21),
+(8, 'Security & Networking', 'shield-halved', 18)
+ON DUPLICATE KEY UPDATE `name` = VALUES(`name`);
 
--- --------------------------------------------------------
--- CVS  (one CV per seeker)
--- --------------------------------------------------------
-INSERT INTO `cvs` (`cv_id`, `seeker_id`, `file_path`, `uploaded_at`) VALUES
-(1, 1, 'uploads/cvs/kamal_perera_cv.pdf', '2026-08-10 09:15:00'),
-(2, 2, 'uploads/cvs/nethmi_lakshan_cv.pdf', '2026-08-11 10:30:00'),
-(3, 3, 'uploads/cvs/kasun_wickramasinghe_cv.pdf', '2026-08-11 14:00:00'),
-(4, 4, 'uploads/cvs/sarah_fernando_cv.pdf', '2026-08-12 08:45:00'),
-(5, 5, 'uploads/cvs/ravi_bandara_cv.pdf', '2026-08-12 16:20:00');
+-- Jobs
+INSERT INTO `jobs` (`id`, `company_id`, `category_id`, `title`, `company_name`, `location`, `job_type`, `salary_range`, `description`, `requirements`, `status`) VALUES
+(1, 1, 1, 'Senior Full Stack Engineer', 'Virtusa (Pvt) Ltd', 'Colombo 07', 'Full-time', 'Rs. 250,000 - Rs. 400,000', 'Develop mission-critical web applications with React and Node.js.', '4+ years exp with fullstack stack.', 'Approved'),
+(2, 2, 2, 'DevOps & Cloud Architect', 'Dialog Axiata PLC', 'Colombo 02', 'Full-time', 'Rs. 300,000 - Rs. 500,000', 'Oversee cloud infrastructure on AWS and Kubernetes.', '5+ years experience in CI/CD and AWS.', 'Approved'),
+(3, 3, 3, 'UI/UX Product Designer', 'WSO2 Lanka', 'Colombo 03', 'Remote', 'Rs. 180,000 - Rs. 280,000', 'Design intuitive interfaces and component design systems.', 'Figma proficiency and strong portfolio.', 'Approved'),
+(4, 4, 4, 'Digital Marketing Lead', 'Apex Digital Media', 'Nugegoda', 'Full-time', 'Rs. 120,000 - Rs. 180,000', 'Drive growth marketing and social ad campaigns.', 'SEO/SEM expertise and analytics.', 'Pending Approval')
+ON DUPLICATE KEY UPDATE `title` = VALUES(`title`);
 
--- --------------------------------------------------------
--- JOBS  (all posted by company_id = 1)
--- --------------------------------------------------------
-INSERT INTO `jobs` (`job_id`, `company_id`, `category_id`, `title`, `description`, `location`, `salary_min`, `salary_max`, `job_type`, `posted_date`, `expiry_date`, `status`) VALUES
-(1, 1, 1, 'Senior Software Engineer', 'Looking for an experienced software engineer to join our backend team, working on core telecom platforms.', 'Colombo, Sri Lanka', 150000.00, 220000.00, 'Full-time', '2026-07-20', '2026-09-20', 'approved'),
-(2, 1, 6, 'UI/UX Designer', 'Design intuitive customer-facing interfaces for our mobile and web products.', 'Colombo, Sri Lanka', 90000.00, 140000.00, 'Full-time', '2026-07-25', '2026-09-25', 'approved'),
-(3, 1, 3, 'Data Scientist', 'Analyze customer usage data to drive product and network decisions.', 'Colombo, Sri Lanka', 180000.00, 250000.00, 'Full-time', '2026-08-01', '2026-10-01', 'pending'),
-(4, 1, 1, 'QA Engineer', 'Own manual and automated testing for our digital services team.', 'Kandy, Sri Lanka', 100000.00, 150000.00, 'Full-time', '2026-08-05', '2026-10-05', 'approved'),
-(5, 1, 4, 'Customer Support Executive', 'Handle customer queries and escalations across chat, email and phone.', 'Colombo, Sri Lanka', 60000.00, 85000.00, 'Part-time', '2026-08-10', '2026-10-10', 'rejected');
+-- Reviews
+INSERT INTO `reviews` (`id`, `job_title`, `seeker_name`, `rating`, `comment`, `status`, `is_flagged`) VALUES
+(1, 'Senior Full Stack Engineer (Virtusa)', 'Dilshan Silva', 5, 'Excellent interview process. Professional panel with relevant technical scenarios.', 'Approved', 0),
+(2, 'UI/UX Product Designer (WSO2)', 'Nadeesha Fernando', 4, 'Great company culture and constructive feedback after design assignment.', 'Approved', 0),
+(3, 'Digital Marketing Lead (Apex Digital)', 'Kasun Jayawardena', 1, 'THIS COMPANY IS COMPLETE FRAUD AND SCAM DO NOT APPLY!!!', 'Flagged', 1)
+ON DUPLICATE KEY UPDATE `seeker_name` = VALUES(`seeker_name`);
 
--- --------------------------------------------------------
--- APPLICATIONS  (seekers applying to the jobs above)
--- --------------------------------------------------------
-INSERT INTO `applications` (`app_id`, `seeker_id`, `job_id`, `cv_id`, `apply_date`, `status`, `experience`) VALUES
-(1, 1, 1, 1, '2026-08-12', 'accepted', '5+ years in React/Node.js, previously at WSO2.'),
-(2, 2, 2, 2, '2026-08-13', 'reviewed', '3 years UI/UX experience, worked with fintech startups.'),
-(3, 3, 3, 3, '2026-08-14', 'pending', '2 years data analysis experience, Python and SQL.'),
-(4, 4, 1, 4, '2026-08-15', 'rejected', '1 year junior developer experience.'),
-(5, 5, 4, 5, '2026-08-16', 'reviewed', '4 years QA automation testing experience.');
+-- Subscription Plans
+INSERT INTO `subscription_plans` (`plan_id`, `name`, `price`, `duration_days`, `max_jobs`, `features`) VALUES
+(1, 'Starter / Free', 0.00, 30, 3, 'Standard job postings, Basic candidate search, 3 Active job listings'),
+(2, 'Professional Employer', 15000.00, 30, 15, 'Featured job tag, Unlimited applicant CV downloads, Priority tech support'),
+(3, 'Enterprise Unlimited', 45000.00, 90, 100, 'Dedicated account manager, Automated candidate shortlisting, Custom branding')
+ON DUPLICATE KEY UPDATE `name` = VALUES(`name`);
 
--- --------------------------------------------------------
--- INTERVIEWER  (belongs to company_id = 1)
--- --------------------------------------------------------
-INSERT INTO `interviewer` (`interviewer_id`, `company_id`, `interviewer_name`, `contact_number`) VALUES
-(1, 1, 'Nadeesha Perera', '0771112233'),
-(2, 1, 'Ruwan Silva', '0779998877');
-
--- --------------------------------------------------------
--- INTERVIEWS
--- --------------------------------------------------------
-INSERT INTO `interviews` (`interview_id`, `app_id`, `interviewer_id`, `interview_date`, `start_time`, `meeting_link`, `notes`, `status`) VALUES
-(1, 1, 1, '2026-08-20', '10:00:00', 'https://meet.google.com/abc-defg-hij', 'Strong technical round, moving to offer stage.', 'Completed'),
-(2, 2, 2, '2026-08-25', '14:00:00', 'https://meet.google.com/xyz-uvwx-klm', NULL, 'Scheduled'),
-(3, 5, 1, '2026-08-28', '11:00:00', 'https://meet.google.com/qrt-opqr-stu', NULL, 'Scheduled');
-
--- --------------------------------------------------------
--- REVIEW  (seekers reviewing jobs/company)
--- --------------------------------------------------------
-INSERT INTO `review` (`review_id`, `job_id`, `seeker_id`, `rating`, `rank`, `comment`) VALUES
-(1, 1, 2, 5, 1, 'Great interview process and a friendly team.'),
-(2, 2, 3, 4, 2, 'Good communication throughout the process.'),
-(3, 4, 1, 5, 1, 'Professional and well organized company.');
-
--- --------------------------------------------------------
--- SEEKER_CATEGORY  (job preferences per seeker)
--- --------------------------------------------------------
-INSERT INTO `seeker_category` (`seeker_id`, `category_id`) VALUES
-(1, 1),
-(2, 6),
-(3, 3),
-(4, 1),
-(5, 1);
-
--- --------------------------------------------------------
--- SUBSCRIPTION_PLANS
--- --------------------------------------------------------
-INSERT INTO `subscription_plans` (`plan_id`, `plan_name`, `duration_days`, `price`) VALUES
-(1, 'Basic', 30, 500.00),
-(2, 'Standard', 90, 1200.00),
-(3, 'Premium', 180, 2000.00);
-
--- --------------------------------------------------------
--- USER_SUBSCRIPTIONS  (a couple of seekers subscribed)
--- --------------------------------------------------------
+-- User Subscriptions
 INSERT INTO `user_subscriptions` (`sub_id`, `user_id`, `plan_id`, `start_date`, `end_date`, `is_active`) VALUES
-(1, 2, 1, '2026-08-01', '2026-08-31', 1),
-(2, 3, 2, '2026-07-15', '2026-10-13', 1);
+(101, 3, 3, '2026-02-01', '2026-05-01', 1),
+(102, 5, 3, '2026-03-01', '2026-06-01', 1),
+(103, 7, 2, '2026-03-15', '2026-04-15', 1)
+ON DUPLICATE KEY UPDATE `is_active` = VALUES(`is_active`);
 
--- --------------------------------------------------------
--- JOB_ALERTS  (seeker alert preferences)
--- --------------------------------------------------------
-INSERT INTO `job_alerts` (`alert_id`, `seeker_id`, `suggest_job`, `location_pref`, `selects_or_not`) VALUES
-(1, 1, 'Software Engineer', 'Colombo', 1),
-(2, 3, 'Data Analyst', 'Colombo', 1),
-(3, 5, 'QA Engineer', 'Kandy', 0);
+-- Settings
+INSERT INTO `settings` (`id`, `site_name`, `site_email`, `maintenance_mode`, `enable_registration`, `enable_job_approval`, `jobs_per_page`) VALUES
+(1, 'JobPortal.lk', 'admin@jobportal.lk', 0, 1, 1, 10)
+ON DUPLICATE KEY UPDATE `site_name` = VALUES(`site_name`);
