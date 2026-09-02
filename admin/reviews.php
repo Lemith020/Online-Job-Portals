@@ -1,7 +1,6 @@
 <?php
 /**
- * JobPortal.lk - Review Moderation (Admin)
- * Member 1 - Admin UI
+ * JobPortal.lk - Reviews & Ratings Moderation
  */
 
 require_once __DIR__ . '/../includes/auth_check.php';
@@ -9,181 +8,162 @@ require_once __DIR__ . '/../includes/functions.php';
 
 $page_title = 'Review Moderation';
 
-// Handle Action Requests (Delete Review)
-if (isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['id'])) {
-    $target_id = (int)$_GET['id'];
-    delete_review($target_id);
-    set_flash('Review was deleted and removed from the public platform.', 'error');
-    header('Location: reviews.php');
-    exit;
+// Handle POST actions
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $action = $_POST['action'] ?? '';
+
+    if ($action === 'update_status') {
+        $id = (int)($_POST['id'] ?? 0);
+        $new_status = $_POST['status'] ?? 'Approved';
+        update_review_status($id, $new_status);
+        add_activity("Updated review #$id status to $new_status", "review");
+        set_flash("Review status updated to {$new_status}.", "success");
+        header("Location: " . BASE_URL . "/admin/reviews.php");
+        exit;
+    }
+
+    if ($action === 'delete') {
+        $id = (int)($_POST['id'] ?? 0);
+        delete_review_admin($id);
+        add_activity("Deleted review #$id", "review");
+        set_flash("Review deleted permanently.", "success");
+        header("Location: " . BASE_URL . "/admin/reviews.php");
+        exit;
+    }
 }
 
-// Filters & Search
+$status_filter = $_GET['status'] ?? '';
 $search = trim($_GET['search'] ?? '');
-$rating_filter = (int)($_GET['rating'] ?? 0);
-$sort = trim($_GET['sort'] ?? 'newest');
-
-$reviews = get_all_reviews($search, $rating_filter, $sort);
+$reviews = get_all_reviews_admin($status_filter, $search);
 
 require_once __DIR__ . '/../includes/header.php';
 require_once __DIR__ . '/../includes/navbar.php';
 ?>
 
+<!-- Page Header -->
 <div class="page-header">
   <div class="page-title-group">
-    <h1>Review Moderation</h1>
-    <p>Monitor candidate reviews, audit feedback on company interview experiences, and remove inappropriate content.</p>
+    <h1 class="page-title">Reviews & Feedback Moderation</h1>
+    <p class="page-subtitle">Moderate candidate interview reviews, investigate reported feedback, and ensure quality.</p>
   </div>
 </div>
 
-<!-- Main Table Card -->
-<div class="data-table-card">
-  <!-- Table Toolbar -->
-  <form method="GET" action="reviews.php" class="table-toolbar">
-    <div class="toolbar-search">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="11" cy="11" r="8"></circle>
-        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-      </svg>
-      <input type="text" name="search" value="<?php echo htmlspecialchars($search); ?>" placeholder="Search review or job title..." data-table-search="reviewsTable">
-    </div>
-
-    <div class="toolbar-filters">
-      <!-- Rating Filter Tabs -->
-      <div class="filter-tab-group">
-        <a href="reviews.php?rating=0&sort=<?php echo urlencode($sort); ?>&search=<?php echo urlencode($search); ?>" class="filter-tab <?php echo ($rating_filter === 0) ? 'active' : ''; ?>">All Ratings</a>
-        <a href="reviews.php?rating=5&sort=<?php echo urlencode($sort); ?>&search=<?php echo urlencode($search); ?>" class="filter-tab <?php echo ($rating_filter === 5) ? 'active' : ''; ?>">5 Stars</a>
-        <a href="reviews.php?rating=4&sort=<?php echo urlencode($sort); ?>&search=<?php echo urlencode($search); ?>" class="filter-tab <?php echo ($rating_filter === 4) ? 'active' : ''; ?>">4 Stars</a>
-        <a href="reviews.php?rating=3&sort=<?php echo urlencode($sort); ?>&search=<?php echo urlencode($search); ?>" class="filter-tab <?php echo ($rating_filter === 3) ? 'active' : ''; ?>">3 Stars</a>
-        <a href="reviews.php?rating=2&sort=<?php echo urlencode($sort); ?>&search=<?php echo urlencode($search); ?>" class="filter-tab <?php echo ($rating_filter === 2) ? 'active' : ''; ?>">2 Stars</a>
-        <a href="reviews.php?rating=1&sort=<?php echo urlencode($sort); ?>&search=<?php echo urlencode($search); ?>" class="filter-tab <?php echo ($rating_filter === 1) ? 'active' : ''; ?>">1 Star</a>
+<!-- Filter Bar -->
+<div class="card table-filter-card">
+  <div class="card-body filter-bar-body">
+    <form method="GET" action="reviews.php" class="filter-form">
+      <div class="filter-group">
+        <label>Status:</label>
+        <select name="status" class="form-select" onchange="this.form.submit()">
+          <option value="" <?php echo ($status_filter === '') ? 'selected' : ''; ?>>All Reviews</option>
+          <option value="Flagged" <?php echo ($status_filter === 'Flagged') ? 'selected' : ''; ?>>Flagged / Reported Only</option>
+          <option value="Approved" <?php echo ($status_filter === 'Approved') ? 'selected' : ''; ?>>Approved Only</option>
+        </select>
       </div>
 
-      <!-- Sort Selection -->
-      <select name="sort" class="select-filter" onchange="this.form.submit()">
-        <option value="newest" <?php echo ($sort === 'newest') ? 'selected' : ''; ?>>Newest First</option>
-        <option value="oldest" <?php echo ($sort === 'oldest') ? 'selected' : ''; ?>>Oldest First</option>
-        <option value="lowest" <?php echo ($sort === 'lowest') ? 'selected' : ''; ?>>Lowest Rating</option>
-        <option value="highest" <?php echo ($sort === 'highest') ? 'selected' : ''; ?>>Highest Rating</option>
-      </select>
+      <div class="filter-group search-group">
+        <label>Search Comments:</label>
+        <div class="input-with-icon">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" name="search" class="form-input" placeholder="Search by job, candidate, or comment keywords..." value="<?php echo htmlspecialchars($search); ?>">
+        </div>
+      </div>
 
-      <?php if (!empty($search) || $rating_filter !== 0 || $sort !== 'newest'): ?>
-        <a href="reviews.php" class="btn btn-secondary btn-sm">Reset</a>
-      <?php endif; ?>
-    </div>
-  </form>
+      <div class="filter-actions">
+        <button type="submit" class="btn btn-secondary">Filter</button>
+        <?php if (!empty($status_filter) || !empty($search)): ?>
+          <a href="reviews.php" class="btn btn-outline">Reset</a>
+        <?php endif; ?>
+      </div>
+    </form>
+  </div>
+</div>
 
-  <!-- Responsive Reviews Table -->
-  <div class="table-responsive">
-    <table class="custom-table" id="reviewsTable">
-      <thead>
-        <tr>
-          <th>Job Title</th>
-          <th>Seeker Name</th>
-          <th>Rating</th>
-          <th>Comment</th>
-          <th style="text-align: right;">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <?php if (empty($reviews)): ?>
+<!-- Reviews Table Card -->
+<div class="card">
+  <div class="card-header flex-between">
+    <h3 class="card-title">Reviews & Ratings (<?php echo count($reviews); ?>)</h3>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
           <tr>
-            <td colspan="5" style="text-align: center; padding: 40px; color: var(--text-muted);">
-              No reviews found matching the specified filter criteria.
-            </td>
+            <th>Company / Position</th>
+            <th>Candidate</th>
+            <th>Rating</th>
+            <th>Review Feedback</th>
+            <th>Status</th>
+            <th class="text-right">Actions</th>
           </tr>
-        <?php else: ?>
-          <?php foreach ($reviews as $rev): ?>
+        </thead>
+        <tbody>
+          <?php if (empty($reviews)): ?>
             <tr>
-              <td>
-                <span class="primary-text"><?php echo htmlspecialchars($rev['job_title']); ?></span>
-              </td>
-              <td>
-                <div class="user-cell">
-                  <div class="user-cell-avatar" style="width:28px; height:28px; font-size:11px;">
-                    <?php echo strtoupper(substr($rev['seeker_name'], 0, 1)); ?>
-                  </div>
-                  <span><?php echo htmlspecialchars($rev['seeker_name']); ?></span>
-                </div>
-              </td>
-              <td>
-                <?php echo render_star_rating($rev['rating']); ?>
-              </td>
-              <td style="max-width: 320px;">
-                <div style="color: var(--text-main); line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                  <?php echo htmlspecialchars($rev['comment']); ?>
-                </div>
-                <button type="button" class="btn btn-secondary btn-sm" style="margin-top: 6px; padding: 2px 8px; font-size: 11px;" onclick="viewFullComment('<?php echo htmlspecialchars(addslashes($rev['seeker_name'])); ?>', '<?php echo htmlspecialchars(addslashes($rev['job_title'])); ?>', '<?php echo htmlspecialchars(addslashes($rev['comment'])); ?>', <?php echo (int)$rev['rating']; ?>)">
-                  View Full Comment
-                </button>
-              </td>
-              <td style="text-align: right;">
-                <div class="action-btn-group" style="justify-content: flex-end;">
-                  <button type="button" class="btn btn-danger btn-sm" onclick="confirmAction('Are you sure you want to permanently delete this review?', 'reviews.php?action=delete&id=<?= $rev['id'] ?>')">
-                    Delete
-                  </button>
+              <td colspan="6" class="text-center py-4">
+                <div class="empty-state">
+                  <i class="fa-solid fa-star-half-stroke empty-icon"></i>
+                  <p>No reviews found matching criteria.</p>
                 </div>
               </td>
             </tr>
-          <?php endforeach; ?>
-        <?php endif; ?>
-      </tbody>
-    </table>
-  </div>
+          <?php else: ?>
+            <?php foreach ($reviews as $r): ?>
+              <tr class="<?php echo ($r['status'] === 'Flagged') ? 'row-flagged' : ''; ?>">
+                <td>
+                  <strong><?php echo htmlspecialchars($r['job_title']); ?></strong>
+                  <small class="d-block text-muted"><?php echo date('M d, Y', strtotime($r['created_at'])); ?></small>
+                </td>
+                <td>
+                  <span class="user-display-name"><?php echo htmlspecialchars($r['seeker_name']); ?></span>
+                </td>
+                <td>
+                  <div class="rating-stars">
+                    <?php for ($i = 1; $i <= 5; $i++): ?>
+                      <i class="fa-solid fa-star <?php echo ($i <= $r['rating']) ? 'star-filled' : 'star-empty'; ?>"></i>
+                    <?php endfor; ?>
+                    <span class="rating-num">(<?php echo $r['rating']; ?>/5)</span>
+                  </div>
+                </td>
+                <td>
+                  <p class="review-comment-text">"<?php echo htmlspecialchars($r['comment']); ?>"</p>
+                </td>
+                <td>
+                  <?php if ($r['status'] === 'Flagged'): ?>
+                    <span class="status-pill status-danger">⚠️ Flagged</span>
+                  <?php else: ?>
+                    <span class="status-pill status-active">✓ Approved</span>
+                  <?php endif; ?>
+                </td>
+                <td class="text-right">
+                  <div class="action-buttons">
+                    <?php if ($r['status'] === 'Flagged'): ?>
+                      <form method="POST" action="reviews.php" style="display:inline;">
+                        <input type="hidden" name="action" value="update_status">
+                        <input type="hidden" name="id" value="<?php echo $r['id']; ?>">
+                        <input type="hidden" name="status" value="Approved">
+                        <button type="submit" class="btn btn-sm btn-success" title="Approve / Unflag">
+                          <i class="fa-solid fa-check"></i> Approve
+                        </button>
+                      </form>
+                    <?php endif; ?>
 
-  <!-- Pagination -->
-  <div class="table-pagination">
-    <span class="secondary-text">Showing <?php echo count($reviews); ?> of <?php echo count($reviews); ?> reviews</span>
-    <div class="pagination-controls">
-      <button class="page-btn page-btn-wide">Previous</button>
-      <button class="page-btn active">1</button>
-      <button class="page-btn">2</button>
-      <button class="page-btn">3</button>
-      <button class="page-btn page-btn-wide">Next</button>
+                    <form method="POST" action="reviews.php" style="display:inline;" onsubmit="return confirm('Permanently remove this review?');">
+                      <input type="hidden" name="action" value="delete">
+                      <input type="hidden" name="id" value="<?php echo $r['id']; ?>">
+                      <button type="submit" class="btn-icon text-danger" title="Delete Review">
+                        <i class="fa-regular fa-trash-can"></i>
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            <?php endforeach; ?>
+          <?php endif; ?>
+        </tbody>
+      </table>
     </div>
   </div>
 </div>
-
-<!-- Modal: View Full Comment -->
-<div class="modal-backdrop" id="reviewModal">
-  <div class="modal-dialog">
-    <div class="modal-header">
-      <h3 class="modal-title" id="revModalTitle">Candidate Review</h3>
-      <button type="button" class="modal-close-btn" onclick="closeModal('reviewModal')">&times;</button>
-    </div>
-    <div class="modal-body">
-      <div style="margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between;">
-        <span id="revRatingStars" style="font-size: 18px;"></span>
-        <span id="revJobBadge" style="font-size: 12.5px; font-weight: 700; color: var(--primary-blue);"></span>
-      </div>
-      <div style="background: #f8fafc; border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 16px;">
-        <p id="revModalText" style="line-height: 1.6; color: var(--text-main); font-size: 14px; white-space: pre-wrap;"></p>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button type="button" class="btn btn-secondary" onclick="closeModal('reviewModal')">Close</button>
-    </div>
-  </div>
-</div>
-
-<script>
-function viewFullComment(seeker, job, comment, rating) {
-  document.getElementById('revModalTitle').textContent = 'Review by ' + seeker;
-  document.getElementById('revJobBadge').textContent = job;
-  document.getElementById('revModalText').textContent = comment;
-
-  let stars = '';
-  for (let i = 1; i <= 5; i++) {
-    stars += (i <= rating) ? '<span class="star-filled">★</span>' : '<span class="star-empty">☆</span>';
-  }
-  document.getElementById('revRatingStars').innerHTML = stars;
-
-  openModal('reviewModal');
-}
-</script>
-
-</main> <!-- Close admin-content -->
-</div> <!-- Close admin-main -->
-</div> <!-- Close admin-wrapper -->
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

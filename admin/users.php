@@ -1,7 +1,6 @@
 <?php
 /**
- * JobPortal.lk - User Management (Admin)
- * Member 1 - Admin UI
+ * JobPortal.lk - User Management
  */
 
 require_once __DIR__ . '/../includes/auth_check.php';
@@ -9,153 +8,250 @@ require_once __DIR__ . '/../includes/functions.php';
 
 $page_title = 'User Management';
 
-// Handle Action Requests (Activate, Suspend, Delete)
-if (isset($_GET['action']) && isset($_GET['id'])) {
-    $action = $_GET['action'];
-    $target_id = (int)$_GET['id'];
+// Handle POST actions
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $action = $_POST['action'] ?? '';
 
-    if ($action === 'activate') {
-        update_user_status($target_id, 'Active');
-        set_flash('User status changed to Active.', 'success');
-    } elseif ($action === 'suspend') {
-        update_user_status($target_id, 'Suspended');
-        set_flash('User has been Suspended.', 'warning');
-    } elseif ($action === 'delete') {
-        delete_user($target_id);
-        set_flash('User has been permanently deleted.', 'error');
+    if ($action === 'create') {
+        $name = trim($_POST['name'] ?? '');
+        $email = trim($_POST['email'] ?? '');
+        $role = $_POST['role'] ?? 'seeker';
+        $phone = trim($_POST['phone'] ?? '');
+        $password = $_POST['password'] ?? 'Password123!';
+
+        if (empty($name) || empty($email)) {
+            set_flash("Name and Email are required fields.", "danger");
+        } else {
+            global $conn;
+            $hashed = password_hash($password, PASSWORD_DEFAULT);
+            if ($conn) {
+                $stmt = mysqli_prepare($conn, "INSERT INTO users (name, email, password, role, phone, status) VALUES (?, ?, ?, ?, ?, 'Active')");
+                if ($stmt) {
+                    mysqli_stmt_bind_param($stmt, "sssss", $name, $email, $hashed, $role, $phone);
+                    mysqli_stmt_execute($stmt);
+                }
+            }
+            add_activity("Created new user account: $name ($email) as " . ucfirst($role), "user");
+            set_flash("User '{$name}' created successfully!", "success");
+        }
+        header("Location: " . BASE_URL . "/admin/users.php");
+        exit;
     }
 
-    header('Location: users.php');
-    exit;
+    if ($action === 'toggle_status') {
+        $id = (int)($_POST['id'] ?? 0);
+        $new_status = $_POST['status'] ?? 'Active';
+        toggle_user_status($id, $new_status);
+        add_activity("Updated user #$id status to $new_status", "user");
+        set_flash("User status updated to {$new_status}.", "success");
+        header("Location: " . BASE_URL . "/admin/users.php");
+        exit;
+    }
+
+    if ($action === 'delete') {
+        $id = (int)($_POST['id'] ?? 0);
+        delete_user($id);
+        add_activity("Deleted user account #$id", "user");
+        set_flash("User #{$id} deleted successfully.", "success");
+        header("Location: " . BASE_URL . "/admin/users.php");
+        exit;
+    }
 }
 
-// Filters & Search
+$role_filter = $_GET['role'] ?? '';
 $search = trim($_GET['search'] ?? '');
-$role_filter = trim($_GET['role'] ?? 'all');
-$status_filter = trim($_GET['status'] ?? 'all');
-
-$users = get_all_users($search, $role_filter, $status_filter);
+$users = get_all_users($role_filter, $search);
 
 require_once __DIR__ . '/../includes/header.php';
 require_once __DIR__ . '/../includes/navbar.php';
 ?>
 
+<!-- Page Header -->
 <div class="page-header">
   <div class="page-title-group">
-    <h1>User Management</h1>
-    <p>Monitor, activate, suspend, or manage roles for registered candidates and employers.</p>
+    <h1 class="page-title">User Management</h1>
+    <p class="page-subtitle">View, search, suspend, or add users across all portal roles.</p>
+  </div>
+  <div class="page-actions">
+    <button type="button" class="btn btn-primary" onclick="openAddUserModal()">
+      <i class="fa-solid fa-user-plus"></i> Add New User
+    </button>
   </div>
 </div>
 
-<!-- Main Table Card -->
-<div class="data-table-card">
-  <!-- Table Search and Filtering Toolbar -->
-  <form method="GET" action="users.php" class="table-toolbar">
-    <div class="toolbar-search">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="11" cy="11" r="8"></circle>
-        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-      </svg>
-      <input type="text" name="search" value="<?php echo htmlspecialchars($search); ?>" placeholder="Search user name or email..." data-table-search="usersTable">
-    </div>
-
-    <div class="toolbar-filters">
-      <!-- Role Filter Tabs -->
-      <div class="filter-tab-group">
-        <a href="users.php?role=all&status=<?php echo urlencode($status_filter); ?>&search=<?php echo urlencode($search); ?>" class="filter-tab <?php echo ($role_filter === 'all' || empty($role_filter)) ? 'active' : ''; ?>">All</a>
-        <a href="users.php?role=seeker&status=<?php echo urlencode($status_filter); ?>&search=<?php echo urlencode($search); ?>" class="filter-tab <?php echo ($role_filter === 'seeker') ? 'active' : ''; ?>">Job Seeker</a>
-        <a href="users.php?role=company&status=<?php echo urlencode($status_filter); ?>&search=<?php echo urlencode($search); ?>" class="filter-tab <?php echo ($role_filter === 'company') ? 'active' : ''; ?>">Company</a>
-        <a href="users.php?role=admin&status=<?php echo urlencode($status_filter); ?>&search=<?php echo urlencode($search); ?>" class="filter-tab <?php echo ($role_filter === 'admin') ? 'active' : ''; ?>">Admin</a>
+<!-- Filter Bar -->
+<div class="card table-filter-card">
+  <div class="card-body filter-bar-body">
+    <form method="GET" action="users.php" class="filter-form">
+      <div class="filter-group">
+        <label>Filter by Role:</label>
+        <select name="role" class="form-select" onchange="this.form.submit()">
+          <option value="" <?php echo ($role_filter === '') ? 'selected' : ''; ?>>All Roles</option>
+          <option value="seeker" <?php echo ($role_filter === 'seeker') ? 'selected' : ''; ?>>Job Seekers</option>
+          <option value="company" <?php echo ($role_filter === 'company') ? 'selected' : ''; ?>>Employers / Companies</option>
+          <option value="admin" <?php echo ($role_filter === 'admin') ? 'selected' : ''; ?>>Administrators</option>
+        </select>
       </div>
 
-      <!-- Status Dropdown -->
-      <select name="status" class="select-filter" onchange="this.form.submit()">
-        <option value="all" <?php echo ($status_filter === 'all') ? 'selected' : ''; ?>>All Statuses</option>
-        <option value="Active" <?php echo ($status_filter === 'Active') ? 'selected' : ''; ?>>Active</option>
-        <option value="Suspended" <?php echo ($status_filter === 'Suspended') ? 'selected' : ''; ?>>Suspended</option>
-      </select>
+      <div class="filter-group search-group">
+        <label>Search Users:</label>
+        <div class="input-with-icon">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" name="search" class="form-input" placeholder="Search by name, email, phone..." value="<?php echo htmlspecialchars($search); ?>">
+        </div>
+      </div>
 
-      <?php if (!empty($search) || $role_filter !== 'all' || $status_filter !== 'all'): ?>
-        <a href="users.php" class="btn btn-secondary btn-sm">Reset</a>
-      <?php endif; ?>
-    </div>
-  </form>
+      <div class="filter-actions">
+        <button type="submit" class="btn btn-secondary">Filter</button>
+        <?php if (!empty($role_filter) || !empty($search)): ?>
+          <a href="users.php" class="btn btn-outline">Reset</a>
+        <?php endif; ?>
+      </div>
+    </form>
+  </div>
+</div>
 
-  <!-- Responsive Users Table -->
-  <div class="table-responsive">
-    <table class="custom-table" id="usersTable">
-      <thead>
-        <tr>
-          <th>User Name</th>
-          <th>Email</th>
-          <th>Role</th>
-          <th>Phone Number</th>
-          <th>Status</th>
-          <th style="text-align: right;">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <?php if (empty($users)): ?>
+<!-- Users Table Card -->
+<div class="card">
+  <div class="card-header flex-between">
+    <h3 class="card-title">Registered Users (<?php echo count($users); ?>)</h3>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table" id="usersTable">
+        <thead>
           <tr>
-            <td colspan="6" style="text-align: center; padding: 40px; color: var(--text-muted);">
-              No users found matching the specified filters.
-            </td>
+            <th>User</th>
+            <th>Role</th>
+            <th>Contact Phone</th>
+            <th>Status</th>
+            <th>Registration Date</th>
+            <th class="text-right">Actions</th>
           </tr>
-        <?php else: ?>
-          <?php foreach ($users as $user): ?>
+        </thead>
+        <tbody>
+          <?php if (empty($users)): ?>
             <tr>
-              <td>
-                <div class="user-cell">
-                  <div class="user-cell-avatar">
-                    <?php echo strtoupper(substr($user['name'], 0, 1)); ?>
-                  </div>
-                  <div>
-                    <div class="primary-text"><?php echo htmlspecialchars($user['name']); ?></div>
-                  </div>
-                </div>
-              </td>
-              <td><?php echo htmlspecialchars($user['email']); ?></td>
-              <td><?php echo render_role_badge($user['role']); ?></td>
-              <td><?php echo htmlspecialchars($user['phone'] ?? '+94 77 000 0000'); ?></td>
-              <td><?php echo render_status_badge($user['status']); ?></td>
-              <td style="text-align: right;">
-                <div class="action-btn-group" style="justify-content: flex-end;">
-                  <?php if ($user['status'] === 'Active'): ?>
-                    <a href="users.php?action=suspend&id=<?php echo $user['id']; ?>" class="btn btn-secondary btn-sm" title="Suspend account">
-                      Suspend
-                    </a>
-                  <?php else: ?>
-                    <a href="users.php?action=activate&id=<?php echo $user['id']; ?>" class="btn btn-success btn-sm" title="Activate account">
-                      Activate
-                    </a>
-                  <?php endif; ?>
-
-                  <button type="button" class="btn btn-danger btn-sm" onclick="confirmAction('Are you sure you want to permanently delete user <?= htmlspecialchars($user['name'], ENT_QUOTES) ?>?', 'users.php?action=delete&id=<?= $user['id'] ?>')">
-                    Delete
-                  </button>
+              <td colspan="6" class="text-center py-4">
+                <div class="empty-state">
+                  <i class="fa-solid fa-users-slash empty-icon"></i>
+                  <p>No matching users found.</p>
                 </div>
               </td>
             </tr>
-          <?php endforeach; ?>
-        <?php endif; ?>
-      </tbody>
-    </table>
-  </div>
+          <?php else: ?>
+            <?php foreach ($users as $u): ?>
+              <tr>
+                <td>
+                  <div class="user-row-info">
+                    <div class="user-avatar-sm role-<?php echo htmlspecialchars($u['role']); ?>">
+                      <span><?php echo strtoupper(substr($u['name'], 0, 1)); ?></span>
+                    </div>
+                    <div>
+                      <strong class="user-display-name"><?php echo htmlspecialchars($u['name']); ?></strong>
+                      <span class="user-display-email"><?php echo htmlspecialchars($u['email']); ?></span>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <?php if ($u['role'] === 'admin'): ?>
+                    <span class="badge badge-purple">Admin</span>
+                  <?php elseif ($u['role'] === 'company'): ?>
+                    <span class="badge badge-indigo">Employer</span>
+                  <?php else: ?>
+                    <span class="badge badge-teal">Job Seeker</span>
+                  <?php endif; ?>
+                </td>
+                <td><?php echo htmlspecialchars($u['phone'] ?: 'N/A'); ?></td>
+                <td>
+                  <?php if ($u['status'] === 'Active'): ?>
+                    <span class="status-pill status-active">● Active</span>
+                  <?php elseif ($u['status'] === 'Suspended'): ?>
+                    <span class="status-pill status-danger">● Suspended</span>
+                  <?php else: ?>
+                    <span class="status-pill status-warning">● <?php echo htmlspecialchars($u['status']); ?></span>
+                  <?php endif; ?>
+                </td>
+                <td><?php echo date('M d, Y', strtotime($u['created_at'])); ?></td>
+                <td class="text-right">
+                  <div class="action-buttons">
+                    <?php if ($u['status'] === 'Active'): ?>
+                      <form method="POST" action="users.php" style="display:inline;" onsubmit="return confirm('Suspend this user account?');">
+                        <input type="hidden" name="action" value="toggle_status">
+                        <input type="hidden" name="id" value="<?php echo $u['id']; ?>">
+                        <input type="hidden" name="status" value="Suspended">
+                        <button type="submit" class="btn-icon text-amber" title="Suspend User">
+                          <i class="fa-solid fa-ban"></i>
+                        </button>
+                      </form>
+                    <?php else: ?>
+                      <form method="POST" action="users.php" style="display:inline;">
+                        <input type="hidden" name="action" value="toggle_status">
+                        <input type="hidden" name="id" value="<?php echo $u['id']; ?>">
+                        <input type="hidden" name="status" value="Active">
+                        <button type="submit" class="btn-icon text-emerald" title="Activate User">
+                          <i class="fa-solid fa-circle-check"></i>
+                        </button>
+                      </form>
+                    <?php endif; ?>
 
-  <!-- Pagination Controls (Matching Blueprint) -->
-  <div class="table-pagination">
-    <span class="secondary-text">Showing <?php echo count($users); ?> of <?php echo count($users); ?> registered users</span>
-    <div class="pagination-controls">
-      <button class="page-btn page-btn-wide">Previous</button>
-      <button class="page-btn active">1</button>
-      <button class="page-btn">2</button>
-      <button class="page-btn page-btn-wide">Next</button>
+                    <?php if ($u['role'] !== 'admin' || $u['id'] != ($_SESSION['user']['id'] ?? 1)): ?>
+                      <form method="POST" action="users.php" style="display:inline;" onsubmit="return confirm('Permanently delete this user?');">
+                        <input type="hidden" name="action" value="delete">
+                        <input type="hidden" name="id" value="<?php echo $u['id']; ?>">
+                        <button type="submit" class="btn-icon text-danger" title="Delete User">
+                          <i class="fa-regular fa-trash-can"></i>
+                        </button>
+                      </form>
+                    <?php endif; ?>
+                  </div>
+                </td>
+              </tr>
+            <?php endforeach; ?>
+          <?php endif; ?>
+        </tbody>
+      </table>
     </div>
   </div>
 </div>
 
-</main> <!-- Close admin-content -->
-</div> <!-- Close admin-main -->
-</div> <!-- Close admin-wrapper -->
+<script>
+function openAddUserModal() {
+  const content = `
+    <form method="POST" action="users.php">
+      <input type="hidden" name="action" value="create">
+      <div class="form-group mb-3">
+        <label class="form-label">Full Name <span class="text-danger">*</span></label>
+        <input type="text" name="name" class="form-input" required placeholder="e.g. Kasun Silva">
+      </div>
+      <div class="form-group mb-3">
+        <label class="form-label">Email Address <span class="text-danger">*</span></label>
+        <input type="email" name="email" class="form-input" required placeholder="e.g. kasun@example.com">
+      </div>
+      <div class="form-group mb-3">
+        <label class="form-label">Role <span class="text-danger">*</span></label>
+        <select name="role" class="form-select" required>
+          <option value="seeker">Job Seeker</option>
+          <option value="company">Employer / Company</option>
+          <option value="admin">Administrator</option>
+        </select>
+      </div>
+      <div class="form-group mb-3">
+        <label class="form-label">Phone Number</label>
+        <input type="text" name="phone" class="form-input" placeholder="+94 77 123 4567">
+      </div>
+      <div class="form-group mb-4">
+        <label class="form-label">Initial Password</label>
+        <input type="password" name="password" class="form-input" value="Password123!" required>
+      </div>
+      <div class="modal-footer px-0 pb-0">
+        <button type="button" class="btn btn-secondary" onclick="closeAdminModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Create User Account</button>
+      </div>
+    </form>
+  `;
+  openAdminModal('Add New User Account', content);
+}
+</script>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

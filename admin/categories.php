@@ -1,205 +1,137 @@
 <?php
 /**
- * JobPortal.lk - Category Management (Admin)
- * Member 1 - Admin UI
+ * JobPortal.lk - Category Management
  */
 
 require_once __DIR__ . '/../includes/auth_check.php';
 require_once __DIR__ . '/../includes/functions.php';
 
-$page_title = 'Job Category Management';
+$page_title = 'Category Management';
 
-// Handle Add / Edit Category
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
-    $category_name = trim($_POST['category_name'] ?? '');
-    $cat_id = (int)($_POST['category_id'] ?? 0);
+// Handle POST actions
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $action = $_POST['action'] ?? '';
 
-    if (!empty($category_name)) {
-        save_category($cat_id, $category_name);
-        if ($cat_id > 0) {
-            set_flash("Category updated to '$category_name'.", 'success');
+    if ($action === 'create' || $action === 'update') {
+        $name = trim($_POST['name'] ?? '');
+        $icon = trim($_POST['icon'] ?? 'briefcase');
+        $id = !empty($_POST['id']) ? (int)$_POST['id'] : null;
+
+        if (empty($name)) {
+            set_flash("Category name is required.", "danger");
         } else {
-            set_flash("New category '$category_name' created successfully.", 'success');
+            save_category($name, $icon, $id);
+            add_activity(($id ? "Updated" : "Created") . " job category: $name", "category");
+            set_flash("Category '{$name}' " . ($id ? "updated" : "created") . " successfully!", "success");
         }
+        header("Location: " . BASE_URL . "/admin/categories.php");
+        exit;
     }
-    header('Location: categories.php');
-    exit;
+
+    if ($action === 'delete') {
+        $id = (int)($_POST['id'] ?? 0);
+        delete_category($id);
+        add_activity("Deleted job category #$id", "category");
+        set_flash("Category deleted successfully.", "success");
+        header("Location: " . BASE_URL . "/admin/categories.php");
+        exit;
+    }
 }
 
-// Handle Delete Category
-if (isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['id'])) {
-    $cat_id = (int)$_GET['id'];
-    delete_category($cat_id);
-    set_flash('Category deleted successfully.', 'error');
-    header('Location: categories.php');
-    exit;
-}
-
-// Filters & Sort
-$search = trim($_GET['search'] ?? '');
-$sort = trim($_GET['sort'] ?? 'name');
-
-$categories = get_all_categories($search, $sort);
+$categories = get_all_categories_admin();
 
 require_once __DIR__ . '/../includes/header.php';
 require_once __DIR__ . '/../includes/navbar.php';
 ?>
 
+<!-- Page Header -->
 <div class="page-header">
   <div class="page-title-group">
-    <h1>Job Category Management</h1>
-    <p>Organize industries and job classifications displayed on candidate search and post forms.</p>
+    <h1 class="page-title">Job Categories</h1>
+    <p class="page-subtitle">Organize and manage job classification sectors across the portal.</p>
   </div>
-  <div>
+  <div class="page-actions">
     <button type="button" class="btn btn-primary" onclick="openAddCategoryModal()">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="12" y1="5" x2="12" y2="19"></line>
-        <line x1="5" y1="12" x2="19" y2="12"></line>
-      </svg>
-      <span>+ Add Category</span>
+      <i class="fa-solid fa-plus"></i> Add New Category
     </button>
   </div>
 </div>
 
-<!-- Main Table Card -->
-<div class="data-table-card">
-  <!-- Table Toolbar -->
-  <form method="GET" action="categories.php" class="table-toolbar">
-    <div class="toolbar-search">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="11" cy="11" r="8"></circle>
-        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-      </svg>
-      <input type="text" name="search" value="<?php echo htmlspecialchars($search); ?>" placeholder="Search category name..." data-table-search="categoriesTable">
-    </div>
-
-    <div class="toolbar-filters">
-      <span style="font-size: 13px; font-weight: 600; color: var(--text-muted);">Sort By:</span>
-      <div class="filter-tab-group">
-        <a href="categories.php?sort=name&search=<?php echo urlencode($search); ?>" class="filter-tab <?php echo ($sort === 'name') ? 'active' : ''; ?>">Alphabetical</a>
-        <a href="categories.php?sort=jobs&search=<?php echo urlencode($search); ?>" class="filter-tab <?php echo ($sort === 'jobs') ? 'active' : ''; ?>">Most Jobs</a>
-        <a href="categories.php?sort=recent&search=<?php echo urlencode($search); ?>" class="filter-tab <?php echo ($sort === 'recent') ? 'active' : ''; ?>">Recently Added</a>
-      </div>
-
-      <?php if (!empty($search) || $sort !== 'name'): ?>
-        <a href="categories.php" class="btn btn-secondary btn-sm">Reset</a>
-      <?php endif; ?>
-    </div>
-  </form>
-
-  <!-- Responsive Categories Table -->
-  <div class="table-responsive">
-    <table class="custom-table" id="categoriesTable">
-      <thead>
-        <tr>
-          <th>Category Name</th>
-          <th>Number of Jobs</th>
-          <th style="text-align: right;">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <?php if (empty($categories)): ?>
-          <tr>
-            <td colspan="3" style="text-align: center; padding: 40px; color: var(--text-muted);">
-              No job categories found matching your query.
-            </td>
-          </tr>
-        <?php else: ?>
-          <?php foreach ($categories as $cat): ?>
-            <tr>
-              <td>
-                <div class="user-cell">
-                  <div class="user-cell-avatar" style="background:#ede9fe; color:#7c3aed;">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
-                      <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
-                    </svg>
-                  </div>
-                  <div>
-                    <div class="primary-text" style="font-size: 14.5px;"><?php echo htmlspecialchars($cat['name']); ?></div>
-                  </div>
-                </div>
-              </td>
-              <td>
-                <span style="font-weight: 700; color: var(--text-heading);"><?php echo number_format($cat['job_count']); ?></span>
-                <span class="secondary-text"> open positions</span>
-              </td>
-              <td style="text-align: right;">
-                <div class="action-btn-group" style="justify-content: flex-end;">
-                  <button type="button" class="btn btn-secondary btn-sm" onclick="openEditCategoryModal(<?= $cat['id']; ?>, '<?= htmlspecialchars(addslashes($cat['name'])); ?>')">
-                    Edit
-                  </button>
-                  <button type="button" class="btn btn-danger btn-sm" onclick="confirmAction('Are you sure you want to delete category <?= htmlspecialchars($cat['name'], ENT_QUOTES); ?>?', 'categories.php?action=delete&id=<?= $cat['id']; ?>')">
-                    Delete
-                  </button>
-                </div>
-              </td>
-            </tr>
-          <?php endforeach; ?>
-        <?php endif; ?>
-      </tbody>
-    </table>
-  </div>
-
-  <!-- Pagination -->
-  <div class="table-pagination">
-    <span class="secondary-text">Showing <?php echo count($categories); ?> of <?php echo count($categories); ?> categories</span>
-    <div class="pagination-controls">
-      <button class="page-btn page-btn-wide">Previous</button>
-      <button class="page-btn active">1</button>
-      <button class="page-btn">2</button>
-      <button class="page-btn">3</button>
-      <button class="page-btn page-btn-wide">Next</button>
-    </div>
-  </div>
-</div>
-
-<!-- Modal: Add / Edit Category -->
-<div class="modal-backdrop" id="categoryModal">
-  <div class="modal-dialog">
-    <div class="modal-header">
-      <h3 class="modal-title" id="catModalTitle">Add Job Category</h3>
-      <button type="button" class="modal-close-btn" onclick="closeModal('categoryModal')">&times;</button>
-    </div>
-    <form method="POST" action="categories.php">
-      <input type="hidden" name="action" value="save_category">
-      <input type="hidden" name="category_id" id="modalCatId" value="0">
-      
-      <div class="modal-body">
-        <div class="form-field">
-          <label class="form-label">Category Name *</label>
-          <input type="text" name="category_name" id="modalCatName" class="form-input-text" placeholder="e.g. Artificial Intelligence & Machine Learning" required>
+<!-- Categories Grid -->
+<div class="categories-grid">
+  <?php foreach ($categories as $cat): ?>
+    <div class="category-card">
+      <div class="category-card-header">
+        <div class="category-icon-box">
+          <i class="fa-solid fa-<?php echo htmlspecialchars($cat['icon'] ?: 'briefcase'); ?>"></i>
+        </div>
+        <div class="category-actions">
+          <button class="btn-icon text-primary" title="Edit Category" onclick='openEditCategoryModal(<?php echo json_encode($cat); ?>)'>
+            <i class="fa-regular fa-pen-to-square"></i>
+          </button>
+          <form method="POST" action="categories.php" style="display:inline;" onsubmit="return confirm('Delete this category?');">
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="id" value="<?php echo $cat['id']; ?>">
+            <button type="submit" class="btn-icon text-danger" title="Delete Category">
+              <i class="fa-regular fa-trash-can"></i>
+            </button>
+          </form>
         </div>
       </div>
-      
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" onclick="closeModal('categoryModal')">Cancel</button>
-        <button type="submit" class="btn btn-primary" id="catModalSubmitBtn">Save Category</button>
+      <div class="category-card-body">
+        <h3 class="category-name"><?php echo htmlspecialchars($cat['name']); ?></h3>
+        <span class="category-jobs-count">
+          <i class="fa-solid fa-briefcase"></i> <?php echo number_format($cat['job_count'] ?? 0); ?> Active Jobs
+        </span>
       </div>
-    </form>
-  </div>
+    </div>
+  <?php endforeach; ?>
 </div>
 
 <script>
 function openAddCategoryModal() {
-  document.getElementById('catModalTitle').textContent = 'Add New Job Category';
-  document.getElementById('modalCatId').value = '0';
-  document.getElementById('modalCatName').value = '';
-  document.getElementById('catModalSubmitBtn').textContent = 'Create Category';
-  openModal('categoryModal');
+  const content = `
+    <form method="POST" action="categories.php">
+      <input type="hidden" name="action" value="create">
+      <div class="form-group mb-3">
+        <label class="form-label">Category Name <span class="text-danger">*</span></label>
+        <input type="text" name="name" class="form-input" required placeholder="e.g. AI & Machine Learning">
+      </div>
+      <div class="form-group mb-4">
+        <label class="form-label">FontAwesome Icon Name</label>
+        <input type="text" name="icon" class="form-input" value="briefcase" placeholder="e.g. code, brain, cloud, chart-line">
+        <small class="text-muted d-block mt-1">Provide icon slug without 'fa-' prefix (e.g. 'code', 'database', 'users').</small>
+      </div>
+      <div class="modal-footer px-0 pb-0">
+        <button type="button" class="btn btn-secondary" onclick="closeAdminModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Category</button>
+      </div>
+    </form>
+  `;
+  openAdminModal('Add New Job Category', content);
 }
 
-function openEditCategoryModal(id, name) {
-  document.getElementById('catModalTitle').textContent = 'Edit Job Category';
-  document.getElementById('modalCatId').value = id;
-  document.getElementById('modalCatName').value = name;
-  document.getElementById('catModalSubmitBtn').textContent = 'Update Category';
-  openModal('categoryModal');
+function openEditCategoryModal(cat) {
+  const content = `
+    <form method="POST" action="categories.php">
+      <input type="hidden" name="action" value="update">
+      <input type="hidden" name="id" value="${cat.id}">
+      <div class="form-group mb-3">
+        <label class="form-label">Category Name <span class="text-danger">*</span></label>
+        <input type="text" name="name" class="form-input" required value="${cat.name}">
+      </div>
+      <div class="form-group mb-4">
+        <label class="form-label">FontAwesome Icon Name</label>
+        <input type="text" name="icon" class="form-input" value="${cat.icon || 'briefcase'}">
+      </div>
+      <div class="modal-footer px-0 pb-0">
+        <button type="button" class="btn btn-secondary" onclick="closeAdminModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Update Category</button>
+      </div>
+    </form>
+  `;
+  openAdminModal('Edit Category', content);
 }
 </script>
-
-</main> <!-- Close admin-content -->
-</div> <!-- Close admin-main -->
-</div> <!-- Close admin-wrapper -->
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>
