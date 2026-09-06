@@ -4,11 +4,10 @@
 // Purpose : Show login form and check email/password against DB
 // -----------------------------------------------------------------
 session_start();
-session_unset();
-
 require_once '../config/database.php';           // DB connection ($conn)
-require_once '../includes/auth.php'; // login/session helpers
 require_once '../includes/functions.php';  // helper functions
+// NOTE: Do not include includes/auth.php here — this page is for unauthenticated users
+// and auth.php redirects to the login page for protected pages.
 
 $error = "";
 

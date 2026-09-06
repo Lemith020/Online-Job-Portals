@@ -10,7 +10,7 @@ $company_id = $_SESSION['company_id'];
 
 // Not logged in -> send to login page
 if (!isset($_SESSION['user_id'])) {
-    header("Location: /Online-Job-Portal/auth/login.php");
+    header("Location: /Online-Job-Portals/auth/login.php");
     exit;
 }
 

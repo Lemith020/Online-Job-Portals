@@ -18,12 +18,12 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `online_job_portal_db`
+CREATE DATABASE online_job_portal_db;
+use online_job_portal_db;
 --
 
 -- --------------------------------------------------------
 
---
 -- Table structure for table `applications`
 --
 

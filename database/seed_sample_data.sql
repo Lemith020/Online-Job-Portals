@@ -4,17 +4,17 @@
 -- passe (schema import kalata passe witharai run karanna).
 -- Password okkomatama: "password123" (bcrypt hashed)
 -- ============================================================
-
+use online_job_portal_db;
 -- --------------------------------------------------------
 -- USERS  (1 = company, 2-6 = job seekers)
 -- --------------------------------------------------------
 INSERT INTO `users` (`user_id`, `first_name`, `middle_name`, `last_name`, `email`, `password`, `phone`, `role`) VALUES
-(1, 'Dialog', '', 'Axiata PLC', 'hr@dialog.lk', '$2b$12$cgKXqju4LKG14SlSFQCYsOQW/B2QPikFs9XKT.b/RT5C6EHQfCQ0a', '0112345678', 'company'),
-(2, 'Kamal', '', 'Perera', 'kamal.perera@gmail.com', '$2b$12$cgKXqju4LKG14SlSFQCYsOQW/B2QPikFs9XKT.b/RT5C6EHQfCQ0a', '0771234567', 'job_seeker'),
-(3, 'Nethmi', '', 'Lakshan', 'nethmi.l@gmail.com', '$2b$12$cgKXqju4LKG14SlSFQCYsOQW/B2QPikFs9XKT.b/RT5C6EHQfCQ0a', '0712345678', 'job_seeker'),
-(4, 'Kasun', '', 'Wickramasinghe', 'kasun.w@gmail.com', '$2b$12$cgKXqju4LKG14SlSFQCYsOQW/B2QPikFs9XKT.b/RT5C6EHQfCQ0a', '0759876543', 'job_seeker'),
-(5, 'Sarah', '', 'Fernando', 'sarah.f@gmail.com', '$2b$12$cgKXqju4LKG14SlSFQCYsOQW/B2QPikFs9XKT.b/RT5C6EHQfCQ0a', '0723456789', 'job_seeker'),
-(6, 'Ravi', '', 'Bandara', 'ravi.b@gmail.com', '$2b$12$cgKXqju4LKG14SlSFQCYsOQW/B2QPikFs9XKT.b/RT5C6EHQfCQ0a', '0701122334', 'job_seeker');
+(1, 'Dialog', '', 'Axiata PLC', 'hr@dialog.lk', '12345', '0112345678', 'company'),
+(2, 'Kamal', '', 'Perera', 'kamal.perera@gmail.com', '12345', '0771234567', 'job_seeker'),
+(3, 'Nethmi', '', 'Lakshan', 'nethmi.l@gmail.com', '12345', '0712345678', 'job_seeker'),
+(4, 'Kasun', '', 'Wickramasinghe', 'kasun.w@gmail.com', '12345', '0759876543', 'job_seeker'),
+(5, 'Sarah', '', 'Fernando', 'sarah.f@gmail.com', '12345', '0723456789', 'job_seeker'),
+(6, 'Ravi', '', 'Bandara', 'ravi.b@gmail.com', '12345', '0701122334', 'job_seeker');
 
 -- --------------------------------------------------------
 -- COMPANY  (company_id = 1 → the mock-logged-in company)
