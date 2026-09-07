@@ -1,0 +1,15 @@
+/* assets/css/seeker-settings.css */
+
+.section-title { font-size: 16px; margin: 0 0 14px; }
+.alert-success { background:#dcfce7; color:#15803d; padding:10px 14px; border-radius:var(--radius); margin-bottom:14px; font-size:14px; }
+.alert-error { background:#fee2e2; color:#b91c1c; padding:10px 14px; border-radius:var(--radius); margin-bottom:14px; font-size:14px; }
+.btn-full { width: 100%; margin-top: 6px; }
+
+.danger-zone { border: 1px solid #fecaca; }
+.danger-zone p { font-size: 13px; color: var(--text-muted); }
+
+.delete-confirm { display: none; margin-top: 14px; }
+.delete-confirm.show { display: block; }
+.delete-confirm input { margin: 8px 0; }
+
+.settings-note { font-size: 12px; color: var(--text-muted); margin-top: 14px; }

@@ -35,9 +35,9 @@ $jobs = get_jobs($conn, $filters, $per_page, $offset);
 $categories = get_categories($conn);
 
 $page_title = "Browse Jobs";
-$page_css = "seeker-browse-jobs.css";
-$page_js = "seeker-browse-jobs.js";
-require_once '../includes/header.php';
+$page_css = "../assets/css/seeker_page_css/browse-jobs.css";
+$page_js = "../assets/js/seeker_page_js/browse-jobs.js";
+require_once '../includes/seeker-header.php';
 require_once '../includes/seeker-sidebar.php';
 ?>
 

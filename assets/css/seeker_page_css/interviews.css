@@ -1,0 +1,15 @@
+/* assets/css/seeker-interviews.css */
+
+.job-company { color: var(--text-muted); }
+.interview-notes { color: var(--text-muted); font-style: italic; }
+.btn-disabled { opacity: 0.5; pointer-events: none; }
+
+.pagination { display: flex; justify-content: center; gap: 6px; margin-top: 18px; }
+.pagination a {
+  padding: 6px 12px;
+  border-radius: var(--radius);
+  background: #fff;
+  border: 1px solid var(--border);
+  font-size: 13px;
+}
+.pagination a.active { background: var(--blue); color: #fff; border-color: var(--blue); }
