@@ -1082,3 +1082,57 @@ function get_all_jobs($conn, $search = '', $category = '', $limit = 10, $offset 
     }
     return [];
 }
+
+//12 Seeker profile
+function get_seeker_categories($conn, $seeker_id) {
+    $categories = [];
+    if ($conn) {
+        $sql = "SELECT category_name FROM seeker_categories WHERE seeker_id = ?";
+        $stmt = @mysqli_prepare($conn, $sql);
+        if ($stmt) {
+            mysqli_stmt_bind_param($stmt, "i", $seeker_id);
+            mysqli_stmt_execute($stmt);
+            $res = mysqli_stmt_get_result($stmt);
+            if ($res) {
+                while ($row = mysqli_fetch_assoc($res)) {
+                    $categories[] = $row['category_name'];
+                }
+            }
+        }
+    }
+    return $categories;
+}
+
+//12.1 Save or update seeker categories/skills for profile.php
+function save_seeker_categories($conn, $seeker_id, $categories) {
+    if ($conn) {
+        
+        $del_sql = "DELETE FROM seeker_categories WHERE seeker_id = ?";
+        $stmt = @mysqli_prepare($conn, $del_sql);
+        if ($stmt) {
+            mysqli_stmt_bind_param($stmt, "i", $seeker_id);
+            mysqli_stmt_execute($stmt);
+        }
+
+        
+        if (!empty($categories)) {
+            if (!is_array($categories)) {
+                $categories = [$categories];
+            }
+
+            $ins_sql = "INSERT INTO seeker_categories (seeker_id, category_name) VALUES (?, ?)";
+            $stmt_ins = @mysqli_prepare($conn, $ins_sql);
+            if ($stmt_ins) {
+                foreach ($categories as $cat) {
+                    $cat = trim($cat);
+                    if (!empty($cat)) {
+                        mysqli_stmt_bind_param($stmt_ins, "is", $seeker_id, $cat);
+                        mysqli_stmt_execute($stmt_ins);
+                    }
+                }
+            }
+        }
+        return true;
+    }
+    return false;
+}
