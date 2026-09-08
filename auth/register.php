@@ -13,7 +13,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = trim($_POST['name'] ?? '');
     $email = trim($_POST['email'] ?? '');
     $password = trim($_POST['password'] ?? '');
-    $role = $_POST['role'] ?? 'seeker';
+    
+    
+    $raw_role = $_POST['role'] ?? 'seeker';
+    $role = ($raw_role === 'seeker') ? 'job_seeker' : $raw_role;
+    
     $phone = trim($_POST['phone'] ?? '');
 
     if (empty($name) || empty($email) || empty($password)) {
@@ -21,21 +25,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         global $conn;
         $hashed = password_hash($password, PASSWORD_DEFAULT);
+        
         if ($conn) {
-            $stmt = @mysqli_prepare($conn, "INSERT INTO users (name, email, password, role, phone, status) VALUES (?, ?, ?, ?, ?, 'Active')");
+            
+            $stmt = @mysqli_prepare($conn, "INSERT INTO users (first_name, email, password, role, phone) VALUES (?, ?, ?, ?, ?)");
+            
             if ($stmt) {
                 mysqli_stmt_bind_param($stmt, "sssss", $name, $email, $hashed, $role, $phone);
+                
                 if (@mysqli_stmt_execute($stmt)) {
                     $new_id = mysqli_insert_id($conn);
-                    if ($role === 'seeker') {
+                    
+                    if ($role === 'job_seeker') {
                         @mysqli_query($conn, "INSERT INTO job_seekers (user_id) VALUES ($new_id)");
                     } elseif ($role === 'company') {
                         @mysqli_query($conn, "INSERT INTO companies (user_id, company_name, owner_email, status) VALUES ($new_id, '$name', '$email', 'Pending Approval')");
                     }
+                    
                     $success = 'Account created successfully! You can now log in.';
                 } else {
-                    $error = 'Email address is already registered. Please try logging in.';
+                    $error = 'Registration Failed: Email address may already be registered.';
                 }
+            } else {
+                $error = 'Database Error: ' . mysqli_error($conn);
             }
         } else {
             $success = 'Account registered successfully (Demo Mode)! You can now log in.';

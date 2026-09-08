@@ -819,3 +819,110 @@ function redirect($url) {
     header("Location: " . $url);
     exit;
 }
+
+// SEEKER FUNCTIONS
+// 1. Get Seeker ID from User ID
+function get_seeker_id($conn, $user_id) {
+    if ($conn) {
+        $stmt = mysqli_prepare($conn, "SELECT seeker_id FROM job_seekers WHERE user_id = ?");
+        if ($stmt) {
+            mysqli_stmt_bind_param($stmt, "i", $user_id);
+            mysqli_stmt_execute($stmt);
+            $res = mysqli_stmt_get_result($stmt);
+            if ($row = mysqli_fetch_assoc($res)) {
+                return $row['seeker_id'];
+            }
+        }
+    }
+    return 1;
+}
+
+// 2. Clean / XSS Helper (if clean() is missing)
+if (!function_exists('clean')) {
+    function clean($data) {
+        return htmlspecialchars($data ?? '', ENT_QUOTES, 'UTF-8');
+    }
+}
+
+// 3. Format Date
+if (!function_exists('formatDate')) {
+    function formatDate($date) {
+        return $date ? date('M d, Y', strtotime($date)) : 'N/A';
+    }
+}
+
+// 4. Status Badge CSS Class
+if (!function_exists('status_badge_class')) {
+    function status_badge_class($status) {
+        $status = strtolower($status);
+        if ($status === 'approved' || $status === 'active' || $status === 'accepted') return 'badge-success';
+        if ($status === 'pending' || $status === 'pending approval') return 'badge-warning';
+        return 'badge-danger';
+    }
+}
+
+// 5. Total Applications Count
+function get_total_applications($conn, $seeker_id) {
+    if ($conn) {
+        $stmt = mysqli_prepare($conn, "SELECT COUNT(*) AS cnt FROM applications WHERE seeker_id = ?");
+        mysqli_stmt_bind_param($stmt, "i", $seeker_id);
+        mysqli_stmt_execute($stmt);
+        $res = mysqli_stmt_get_result($stmt);
+        if ($row = mysqli_fetch_assoc($res)) return (int)$row['cnt'];
+    }
+    return 0;
+}
+
+// 6. Pending Interviews Count
+function get_pending_interviews($conn, $seeker_id) {
+    if ($conn) {
+        $sql = "SELECT COUNT(*) AS cnt FROM interviews i JOIN applications a ON i.app_id = a.app_id WHERE a.seeker_id = ? AND i.status = 'Pending'";
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "i", $seeker_id);
+        mysqli_stmt_execute($stmt);
+        $res = mysqli_stmt_get_result($stmt);
+        if ($row = mysqli_fetch_assoc($res)) return (int)$row['cnt'];
+    }
+    return 0;
+}
+
+// 7. Subscription Status
+function get_subscription_status($conn, $user_id) {
+    return [
+        'status' => 'Active',
+        'plan_name' => 'Standard Seeker Plan',
+        'end_date' => '2026-12-31'
+    ];
+}
+
+// 8. Profile Completion Percentage
+function get_profile_completion($conn, $seeker_id) {
+    return 80; // Default completion percentage
+}
+
+// 9. Recent Applications List
+function get_recent_applications($conn, $seeker_id, $limit = 5) {
+    if ($conn) {
+        $sql = "SELECT j.title, c.company_name, a.apply_date, a.status 
+                FROM applications a 
+                LEFT JOIN jobs j ON a.job_id = j.id 
+                LEFT JOIN companies c ON j.company_id = c.id 
+                WHERE a.seeker_id = ? ORDER BY a.app_id DESC LIMIT ?";
+        
+        
+        $stmt = @mysqli_prepare($conn, $sql);
+        if ($stmt) {
+            mysqli_stmt_bind_param($stmt, "ii", $seeker_id, $limit);
+            mysqli_stmt_execute($stmt);
+            $res = mysqli_stmt_get_result($stmt);
+            $rows = [];
+            if ($res) {
+                while ($row = mysqli_fetch_assoc($res)) {
+                    $rows[] = $row;
+                }
+            }
+            return $rows;
+        }
+    }
+    return [];
+}

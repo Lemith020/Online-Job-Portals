@@ -32,54 +32,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $authenticated = false;
 
         if ($conn) {
-            $stmt = @mysqli_prepare($conn, "SELECT id, name, email, password, role, status FROM users WHERE email = ?");
+            
+            $stmt = mysqli_prepare($conn, "SELECT user_id, first_name, email, password, role FROM users WHERE email = ?");
+            
             if ($stmt) {
                 mysqli_stmt_bind_param($stmt, "s", $email);
                 mysqli_stmt_execute($stmt);
                 $res = mysqli_stmt_get_result($stmt);
+                
                 if ($user = mysqli_fetch_assoc($res)) {
-                    if ($user['status'] === 'Suspended') {
-                        $error = 'This account has been suspended. Please contact administrator.';
-                    } elseif (password_verify($password, $user['password']) || $password === 'Password123!' || str_contains($email, 'admin')) {
+                    if (password_verify($password, $user['password'])) {
                         $_SESSION['user'] = [
-                            'id' => $user['id'],
-                            'name' => $user['name'],
+                            'id' => $user['user_id'],
+                            'name' => $user['first_name'],
                             'email' => $user['email'],
                             'role' => $user['role']
                         ];
-                        $_SESSION['user_id'] = $user['id'];
+                        $_SESSION['user_id'] = $user['user_id'];
                         $_SESSION['role'] = $user['role'];
                         $authenticated = true;
                     } else {
                         $error = 'Invalid email or password.';
                     }
+                } else {
+                    $error = 'Invalid email or password.';
                 }
-            }
-        }
-
-        // Fallback demo authentication for offline testing
-        if (!$authenticated && empty($error)) {
-            if (str_contains(strtolower($email), 'admin') || $email === 'admin@jobportal.lk') {
-                $_SESSION['user'] = ['id' => 1, 'name' => 'Admin Kamal Perera', 'email' => $email, 'role' => 'admin'];
-                $_SESSION['user_id'] = 1;
-                $_SESSION['role'] = 'admin';
-                $authenticated = true;
-            } elseif (str_contains(strtolower($email), 'company') || str_contains(strtolower($email), 'virtusa')) {
-                $_SESSION['user'] = ['id' => 3, 'name' => 'Virtusa HR Team', 'email' => $email, 'role' => 'company'];
-                $_SESSION['user_id'] = 3;
-                $_SESSION['role'] = 'company';
-                $authenticated = true;
             } else {
-                $_SESSION['user'] = ['id' => 2, 'name' => 'Dilshan Silva', 'email' => $email, 'role' => 'seeker'];
-                $_SESSION['user_id'] = 2;
-                $_SESSION['role'] = 'seeker';
-                $authenticated = true;
+                $error = 'Database Error: ' . mysqli_error($conn);
             }
+        } else {
+            $error = 'Database connection is not available.';
         }
 
         if ($authenticated) {
             add_activity("User logged in: $email (" . ($_SESSION['user']['role'] ?? 'user') . ")", 'auth');
             set_flash("Welcome back, " . htmlspecialchars($_SESSION['user']['name']) . "!", 'success');
+            
             if ($_SESSION['user']['role'] === 'admin') {
                 header('Location: ' . BASE_URL . '/admin/dashboard.php');
             } elseif ($_SESSION['user']['role'] === 'company') {
@@ -170,7 +158,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <label class="form-label">Email Address</label>
         <div class="input-with-icon">
           <i class="fa-regular fa-envelope"></i>
-          <input type="email" name="email" class="form-input" placeholder="admin@jobportal.lk" value="admin@jobportal.lk" required autofocus>
+          <input type="email" name="email" class="form-input" placeholder="yourname@gmail.com" required autofocus>
         </div>
       </div>
 
@@ -181,7 +169,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
         <div class="input-with-icon">
           <i class="fa-solid fa-lock"></i>
-          <input type="password" name="password" class="form-input" placeholder="••••••••" value="Password123!" required>
+          <input type="password" name="password" class="form-input" placeholder="••••••••" required>
         </div>
       </div>
 

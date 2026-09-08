@@ -34,6 +34,10 @@ function nav_active($file, $current) {
         <li class="<?= nav_active('settings.php', $current) ?>">
             <a href="settings.php">⚙️ Settings</a>
         </li>
+        
+        <li style="margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
+            <a href="<?php echo BASE_URL; ?>/auth/logout.php" style="color: #f87171;">🚪 Logout</a>
+        </li>
     </ul>
 </aside>
 
