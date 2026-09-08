@@ -19,7 +19,7 @@ require_once '../includes/seeker-header.php';
 require_once '../includes/seeker-sidebar.php';
 ?>
 
-<h1 class="page-title">Welcome back, <?= clean($_SESSION['first_name'] ?? '') ?>!</h1>
+<h1 class="page-title">Welcome back, <?= clean($_SESSION['user']['name'] ?? 'User') ?>!</h1>
 
 <div class="card-grid">
     <div class="card">
