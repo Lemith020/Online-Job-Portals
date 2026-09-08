@@ -837,6 +837,39 @@ function get_seeker_id($conn, $user_id) {
     return 1;
 }
 
+// Get Seeker CVs list for my-cv.php
+function get_seeker_cvs($conn, $seeker_id) {
+    $cvs = [];
+    if ($conn) {
+        $sql = "SELECT * FROM cvs WHERE seeker_id = ? ORDER BY id DESC";
+        $stmt = @mysqli_prepare($conn, $sql);
+        if ($stmt) {
+            mysqli_stmt_bind_param($stmt, "i", $seeker_id);
+            mysqli_stmt_execute($stmt);
+            $res = mysqli_stmt_get_result($stmt);
+            if ($res) {
+                while ($row = mysqli_fetch_assoc($res)) {
+                    $cvs[] = $row;
+                }
+            }
+        }
+    }
+    return $cvs;
+}
+
+// Insert uploaded CV path into the database
+function insert_cv($conn, $seeker_id, $file_path) {
+    if ($conn) {
+        $sql = "INSERT INTO cvs (seeker_id, file_path, uploaded_at) VALUES (?, ?, NOW())";
+        $stmt = @mysqli_prepare($conn, $sql);
+        if ($stmt) {
+            mysqli_stmt_bind_param($stmt, "is", $seeker_id, $file_path);
+            return mysqli_stmt_execute($stmt);
+        }
+    }
+    return false;
+}
+
 // 2. Clean / XSS Helper (if clean() is missing)
 if (!function_exists('clean')) {
     function clean($data) {
@@ -887,12 +920,47 @@ function get_pending_interviews($conn, $seeker_id) {
 }
 
 // 7. Subscription Status
-function get_subscription_status($conn, $user_id) {
-    return [
-        'status' => 'Active',
-        'plan_name' => 'Standard Seeker Plan',
-        'end_date' => '2026-12-31'
-    ];
+if (!function_exists('get_subscription_status')) {
+    function get_subscription_status($conn, $user_id) {
+        
+        $sql = "SELECT us.*, p.plan_name, p.duration_days 
+                FROM user_subscriptions us 
+                JOIN subscription_plans p ON us.plan_id = p.plan_id 
+                WHERE us.user_id = ? AND us.status = 'Active' 
+                LIMIT 1";
+                
+        $stmt = @mysqli_prepare($conn, $sql);
+        if ($stmt) {
+            mysqli_stmt_bind_param($stmt, "i", $user_id);
+            mysqli_stmt_execute($stmt);
+            $res = mysqli_stmt_get_result($stmt);
+            if ($row = mysqli_fetch_assoc($res)) {
+                $start_date = $row['start_date']; 
+                
+                
+                $duration_days = isset($row['duration_days']) ? (int)$row['duration_days'] : 30;
+                $end_date = date('Y-m-d', strtotime($start_date . " + $duration_days days"));
+
+                return [
+                    'status' => $row['status'],
+                    'plan_name' => $row['plan_name'],
+                    'start_date' => $start_date,
+                    'end_date' => $end_date
+                ];
+            }
+        }
+        
+        
+        $default_start = date('Y-m-d'); 
+        $default_end = date('Y-m-d', strtotime('+30 days')); 
+        
+        return [
+            'status' => 'Active',
+            'plan_name' => 'Standard Seeker Plan',
+            'start_date' => $default_start,
+            'end_date' => $default_end
+        ];
+    }
 }
 
 // 8. Profile Completion Percentage

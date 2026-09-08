@@ -74,8 +74,9 @@ require_once '../includes/seeker-sidebar.php';
             <div class="plan-name"><?= clean($subscription['plan_name']) ?>
                 <span class="badge <?= $subscription['status'] === 'Active' ? 'badge-accepted' : 'badge-rejected' ?>"><?= $subscription['status'] ?></span>
             </div>
-            <p class="plan-dates">Start Date: <?= formatDate($subscription['start_date']) ?></p>
-            <p class="plan-dates">End Date: <?= $subscription['end_date'] ?></p>
+<p class="plan-dates">Start Date: <?= isset($subscription['start_date']) ? formatDate($subscription['start_date']) : 'N/A' ?></p>
+<p class="plan-dates">End Date: <?= isset($subscription['end_date']) ? $subscription['end_date'] : 'N/A' ?></p>
+            
         <?php else: ?>
             <p>No subscription yet.</p>
         <?php endif; ?>
