@@ -926,3 +926,159 @@ function get_recent_applications($conn, $seeker_id, $limit = 5) {
     }
     return [];
 }
+
+// 10. Get Total Jobs Count (For browse-jobs.php pagination/filtering)
+// 1o.1. Get Jobs Count for browse-jobs.php pagination
+function get_jobs_count($conn, $search = '', $category = '') {
+    if ($conn) {
+        $sql = "SELECT COUNT(*) as total FROM jobs WHERE 1=1";
+        $params = [];
+        $types = "";
+
+        if (!empty($search)) {
+            if (is_array($search)) {
+                $search = trim(implode(' ', $search));
+            } else {
+                $search = trim($search);
+            }
+
+            if ($search !== '') {
+                $sql .= " AND (title LIKE ? OR description LIKE ?)";
+                $searchTerm = "%{$search}%";
+                $params[] = $searchTerm;
+                $params[] = $searchTerm;
+                $types .= "ss";
+            }
+        }
+
+        if (!empty($category)) {
+            $sql .= " AND category = ?";
+            $params[] = $category;
+            $types .= "s";
+        }
+
+        $stmt = mysqli_prepare($conn, $sql);
+        if ($stmt) {
+            if (!empty($params)) {
+                mysqli_stmt_bind_param($stmt, $types, ...$params);
+            }
+            mysqli_stmt_execute($stmt);
+            $res = mysqli_stmt_get_result($stmt);
+            if ($row = mysqli_fetch_assoc($res)) {
+                return (int)$row['total'];
+            }
+        }
+    }
+    return 0;
+}
+
+// 10.2. Get Jobs List for browse-jobs.php (with Array-to-string fix)
+function get_jobs($conn, $search = '', $category = '', $limit = 10, $offset = 0) {
+    if ($conn) {
+        $sql = "SELECT j.*, c.company_name FROM jobs j LEFT JOIN companies c ON j.company_id = c.id WHERE 1=1";
+        $params = [];
+        $types = "";
+
+        if (!empty($search)) {
+            if (is_array($search)) {
+                $search = trim(implode(' ', $search));
+            } else {
+                $search = trim($search);
+            }
+
+            if ($search !== '') {
+                $sql .= " AND (j.title LIKE ? OR j.description LIKE ?)";
+                $searchTerm = "%{$search}%";
+                $params[] = $searchTerm;
+                $params[] = $searchTerm;
+                $types .= "ss";
+            }
+        }
+
+        if (!empty($category)) {
+            $sql .= " AND j.category = ?";
+            $params[] = $category;
+            $types .= "s";
+        }
+
+        $sql .= " ORDER BY j.id DESC LIMIT ? OFFSET ?";
+        $params[] = (int)$limit;
+        $params[] = (int)$offset;
+        $types .= "ii";
+
+        $stmt = mysqli_prepare($conn, $sql);
+        if ($stmt) {
+            if (!empty($params)) {
+                mysqli_stmt_bind_param($stmt, $types, ...$params);
+            }
+            mysqli_stmt_execute($stmt);
+            $res = mysqli_stmt_get_result($stmt);
+            $rows = [];
+            if ($res) {
+                while ($row = mysqli_fetch_assoc($res)) {
+                    $rows[] = $row;
+                }
+            }
+            return $rows;
+        }
+    }
+    return [];
+}
+
+//10.3 Get Categories for browse-jobs.php filter dropdown
+function get_categories($conn) {
+    $categories = [];
+    if ($conn) {
+        $sql = "SELECT DISTINCT category FROM jobs WHERE category IS NOT NULL AND category != '' ORDER BY category ASC";
+        $res = mysqli_query($conn, $sql);
+        if ($res) {
+            while ($row = mysqli_fetch_assoc($res)) {
+                $categories[] = $row['category'];
+            }
+        }
+    }
+    return $categories;
+}
+
+// 11. Get All Jobs List (For browse-jobs.php display)
+function get_all_jobs($conn, $search = '', $category = '', $limit = 10, $offset = 0) {
+    if ($conn) {
+        $sql = "SELECT j.*, c.company_name FROM jobs j LEFT JOIN companies c ON j.company_id = c.id WHERE 1=1";
+        $params = [];
+        $types = "";
+
+        if (!empty($search)) {
+            $sql .= " AND (j.title LIKE ? OR j.description LIKE ?)";
+            $searchTerm = "%{$search}%";
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+            $types .= "ss";
+        }
+
+        if (!empty($category)) {
+            $sql .= " AND j.category = ?";
+            $params[] = $category;
+            $types .= "s";
+        }
+
+        $sql .= " ORDER BY j.id DESC LIMIT ? OFFSET ?";
+        $params[] = $limit;
+        $params[] = $offset;
+        $types .= "ii";
+
+        $stmt = mysqli_prepare($conn, $sql);
+        if ($stmt) {
+            mysqli_stmt_bind_param($stmt, $types, ...$params);
+            mysqli_stmt_execute($stmt);
+            $res = mysqli_stmt_get_result($stmt);
+            $rows = [];
+            if ($res) {
+                while ($row = mysqli_fetch_assoc($res)) {
+                    $rows[] = $row;
+                }
+            }
+            return $rows;
+        }
+    }
+    return [];
+}
