@@ -1,10 +1,38 @@
 <?php
+/**
+ * JobPortal.lk - Company Manage Jobs
+ */
+
+require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../includes/functions.php';
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Security Check
+if (!isset($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'company') {
+    header("Location: " . BASE_URL . "/auth/login.php");
+    exit();
+}
+
+$user_id = $_SESSION['user_id'];
+$company_id = $_SESSION['company_id'] ?? 0;
+
+// Fallback: company_id සොයා ගැනීම
+if ($company_id == 0 && isset($conn) && $conn) {
+    $c_q = mysqli_query($conn, "SELECT company_id FROM company WHERE user_id = $user_id");
+    if ($c_q && $c_row = mysqli_fetch_assoc($c_q)) {
+        $company_id = $c_row['company_id'];
+        $_SESSION['company_id'] = $company_id;
+    }
+}
+
 $page_title = "Manage Jobs";
-$page_css = "jobs.css";
-$page_js = "jobs.js";
 $active_page = "jobs";
-require_once __DIR__ . '/includes/header.php';
-require_once __DIR__ . '/includes/sidebar.php';
+
+require_once __DIR__ . '/../includes/header.php';
+require_once __DIR__ . '/../includes/company-sidebar.php';
 
 // ---- Handle Add / Edit job form submit ----
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_job'])) {
@@ -12,8 +40,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_job'])) {
     $description = mysqli_real_escape_string($conn, $_POST['description']);
     $category_id = (int) $_POST['category_id'];
     $location    = mysqli_real_escape_string($conn, $_POST['location']);
-    $salary_min  = (float) $_POST['salary_min'];
-    $salary_max  = (float) $_POST['salary_max'];
+    $salary_min  = !empty($_POST['salary_min']) ? (float) $_POST['salary_min'] : "NULL";
+    $salary_max  = !empty($_POST['salary_max']) ? (float) $_POST['salary_max'] : "NULL";
     $job_type    = mysqli_real_escape_string($conn, $_POST['job_type']);
     $expiry_date = mysqli_real_escape_string($conn, $_POST['expiry_date']);
 
@@ -48,14 +76,6 @@ if (isset($_GET['delete'])) {
     exit;
 }
 
-// ---- Load job for editing ----
-$edit_job = null;
-if (isset($_GET['edit'])) {
-    $edit_id = (int) $_GET['edit'];
-    $edit_result = mysqli_query($conn, "SELECT * FROM jobs WHERE job_id = $edit_id AND company_id = $company_id");
-    $edit_job = mysqli_fetch_assoc($edit_result);
-}
-
 // ---- Filters ----
 $status_filter = isset($_GET['status']) ? $_GET['status'] : 'all';
 $sort = isset($_GET['sort']) ? $_GET['sort'] : 'newest';
@@ -83,129 +103,175 @@ $jobs_result = mysqli_query($conn, $jobs_sql);
 $categories_result = mysqli_query($conn, "SELECT * FROM categories ORDER BY category_name");
 ?>
 
-<div class="page-header">
-    <h1>Manage Job Postings</h1>
-    <button class="btn btn-primary" onclick="openJobModal()">
-        <i class="fa-solid fa-plus"></i> Post New Job
-    </button>
-</div>
-
-<div class="filters-bar">
-    <form method="get" class="search-input">
-        <i class="fa-solid fa-magnifying-glass"></i>
-        <input type="text" name="q" class="form-control" placeholder="Search job title..." value="<?php echo htmlspecialchars($search); ?>">
-    </form>
-
-    <select class="form-control" style="width:auto;" onchange="location = 'jobs.php?status=' + this.value">
-        <option value="all" <?php echo $status_filter == 'all' ? 'selected' : ''; ?>>All Statuses</option>
-        <option value="pending" <?php echo $status_filter == 'pending' ? 'selected' : ''; ?>>Pending</option>
-        <option value="approved" <?php echo $status_filter == 'approved' ? 'selected' : ''; ?>>Approved</option>
-        <option value="rejected" <?php echo $status_filter == 'rejected' ? 'selected' : ''; ?>>Rejected</option>
-    </select>
-
-    <select class="form-control" style="width:auto;" onchange="location = 'jobs.php?sort=' + this.value">
-        <option value="newest" <?php echo $sort == 'newest' ? 'selected' : ''; ?>>Newest First</option>
-        <option value="oldest" <?php echo $sort == 'oldest' ? 'selected' : ''; ?>>Oldest First</option>
-        <option value="expiry" <?php echo $sort == 'expiry' ? 'selected' : ''; ?>>Expiry Soon</option>
-    </select>
-</div>
-
-<?php if (mysqli_num_rows($jobs_result) > 0) : ?>
-    <?php while ($job = mysqli_fetch_assoc($jobs_result)) : ?>
-    <div class="list-item">
-        <div>
-            <div class="list-item-title"><?php echo htmlspecialchars($job['title']); ?></div>
-            <div class="list-item-meta">
-                <span><i class="fa-solid fa-location-dot"></i> <?php echo htmlspecialchars($job['location']); ?></span>
-                <span><i class="fa-solid fa-tag"></i> <?php echo htmlspecialchars($job['category_name']); ?></span>
-                <span><i class="fa-solid fa-clock"></i> Posted <?php echo date('d/m/Y', strtotime($job['posted_date'])); ?></span>
-                <span><i class="fa-solid fa-hourglass-end"></i> Expires <?php echo date('d/m/Y', strtotime($job['expiry_date'])); ?></span>
-            </div>
-        </div>
-
-        <div style="display:flex; align-items:center; gap:12px;">
-            <span class="badge badge-<?php echo $job['status']; ?>"><?php echo ucfirst($job['status']); ?></span>
-            <button class="btn btn-outline btn-sm" onclick='openJobModal(<?php echo json_encode($job); ?>)'>
-                <i class="fa-solid fa-pen"></i> Edit
-            </button>
-            <a href="jobs.php?delete=<?php echo $job['job_id']; ?>" class="btn btn-danger-outline btn-sm" onclick="return confirm('Delete this job?');">
-                <i class="fa-solid fa-trash"></i> Delete
-            </a>
-        </div>
+<main class="main-content">
+    <div class="page-header">
+        <h1>Manage Job Postings</h1>
+        <button class="btn btn-primary" onclick="openJobModal()">
+            <i class="fa-solid fa-plus"></i> Post New Job
+        </button>
     </div>
-    <?php endwhile; ?>
-<?php else : ?>
-    <div class="empty-state">No jobs found. Click "Post New Job" to add one.</div>
-<?php endif; ?>
 
-<!-- Add / Edit Job Modal -->
-<div class="modal-overlay" id="jobModal">
-    <div class="modal-box">
-        <div class="modal-header">
-            <h2 id="jobModalTitle">Post New Job</h2>
-            <button class="modal-close" onclick="closeJobModal()">&times;</button>
-        </div>
-
-        <form method="post">
-            <input type="hidden" name="job_id" id="job_id">
-
-            <div class="form-group">
-                <label>Job Title</label>
-                <input type="text" name="title" id="title" class="form-control" required>
+    <!-- Filters Bar -->
+    <div class="filters-bar card mb-4">
+        <form method="get" action="jobs.php" style="display:flex; gap:12px; width:100%; flex-wrap:wrap;">
+            <div class="search-input" style="flex:1; min-width:200px;">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" name="q" class="form-control" placeholder="Search job title..." value="<?php echo htmlspecialchars($search); ?>">
             </div>
 
-            <div class="form-group">
-                <label>Description</label>
-                <textarea name="description" id="description" class="form-control" required></textarea>
-            </div>
+            <select name="status" class="form-control" style="width:auto;" onchange="this.form.submit()">
+                <option value="all" <?php echo $status_filter == 'all' ? 'selected' : ''; ?>>All Statuses</option>
+                <option value="pending" <?php echo $status_filter == 'pending' ? 'selected' : ''; ?>>Pending</option>
+                <option value="approved" <?php echo $status_filter == 'approved' ? 'selected' : ''; ?>>Approved</option>
+                <option value="rejected" <?php echo $status_filter == 'rejected' ? 'selected' : ''; ?>>Rejected</option>
+            </select>
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Category</label>
-                    <select name="category_id" id="category_id" class="form-control" required>
-                        <?php mysqli_data_seek($categories_result, 0); ?>
-                        <?php while ($cat = mysqli_fetch_assoc($categories_result)) : ?>
-                        <option value="<?php echo $cat['category_id']; ?>"><?php echo htmlspecialchars($cat['category_name']); ?></option>
-                        <?php endwhile; ?>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Location</label>
-                    <input type="text" name="location" id="location" class="form-control" required>
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Salary Min</label>
-                    <input type="number" step="0.01" name="salary_min" id="salary_min" class="form-control">
-                </div>
-                <div class="form-group">
-                    <label>Salary Max</label>
-                    <input type="number" step="0.01" name="salary_max" id="salary_max" class="form-control">
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Job Type</label>
-                    <select name="job_type" id="job_type" class="form-control">
-                        <option value="Full-time">Full-time</option>
-                        <option value="Part-time">Part-time</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Expiry Date</label>
-                    <input type="date" name="expiry_date" id="expiry_date" class="form-control" required>
-                </div>
-            </div>
-
-            <div class="modal-actions">
-                <button type="button" class="btn btn-outline" onclick="closeJobModal()">Cancel</button>
-                <button type="submit" name="save_job" class="btn btn-primary btn-block">Submit for Approval</button>
-            </div>
+            <select name="sort" class="form-control" style="width:auto;" onchange="this.form.submit()">
+                <option value="newest" <?php echo $sort == 'newest' ? 'selected' : ''; ?>>Newest First</option>
+                <option value="oldest" <?php echo $sort == 'oldest' ? 'selected' : ''; ?>>Oldest First</option>
+                <option value="expiry" <?php echo $sort == 'expiry' ? 'selected' : ''; ?>>Expiry Soon</option>
+            </select>
         </form>
     </div>
-</div>
 
-<?php require_once __DIR__ . '/includes/footer.php'; ?>
+    <!-- Job Items List -->
+    <?php if ($jobs_result && mysqli_num_rows($jobs_result) > 0) : ?>
+        <?php while ($job = mysqli_fetch_assoc($jobs_result)) : ?>
+        <div class="list-item">
+            <div>
+                <div class="list-item-title"><?php echo htmlspecialchars($job['title']); ?></div>
+                <div class="list-item-meta">
+                    <span><i class="fa-solid fa-location-dot"></i> <?php echo htmlspecialchars($job['location']); ?></span>
+                    <span><i class="fa-solid fa-tag"></i> <?php echo htmlspecialchars($job['category_name'] ?? 'General'); ?></span>
+                    <span><i class="fa-solid fa-clock"></i> Posted <?php echo date('d/m/Y', strtotime($job['posted_date'])); ?></span>
+                    <span><i class="fa-solid fa-hourglass-end"></i> Expires <?php echo date('d/m/Y', strtotime($job['expiry_date'])); ?></span>
+                </div>
+            </div>
+
+            <div style="display:flex; align-items:center; gap:12px;">
+                <span class="badge badge-<?php echo strtolower($job['status']); ?>"><?php echo ucfirst($job['status']); ?></span>
+                <button class="btn btn-outline btn-sm" onclick='openJobModal(<?php echo json_encode($job); ?>)'>
+                    <i class="fa-solid fa-pen"></i> Edit
+                </button>
+                <a href="jobs.php?delete=<?php echo $job['job_id']; ?>" class="btn btn-danger-outline btn-sm" onclick="return confirm('Delete this job?');">
+                    <i class="fa-solid fa-trash"></i> Delete
+                </a>
+            </div>
+        </div>
+        <?php endwhile; ?>
+    <?php else : ?>
+        <div class="card empty-state">No jobs found. Click "Post New Job" to add one.</div>
+    <?php endif; ?>
+
+    <!-- Add / Edit Job Modal -->
+    <div class="modal-overlay" id="jobModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h2 id="jobModalTitle">Post New Job</h2>
+                <button class="modal-close" onclick="closeJobModal()">&times;</button>
+            </div>
+
+            <form method="post" action="jobs.php">
+                <input type="hidden" name="job_id" id="job_id">
+
+                <div class="form-group">
+                    <label>Job Title</label>
+                    <input type="text" name="title" id="title" class="form-control" required placeholder="e.g. Senior Software Engineer">
+                </div>
+
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea name="description" id="description" class="form-control" required placeholder="Job responsibilities and requirements..."></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select name="category_id" id="category_id" class="form-control" required>
+                            <?php if ($categories_result && mysqli_num_rows($categories_result) > 0) : ?>
+                                <?php mysqli_data_seek($categories_result, 0); ?>
+                                <?php while ($cat = mysqli_fetch_assoc($categories_result)) : ?>
+                                    <option value="<?php echo $cat['category_id']; ?>"><?php echo htmlspecialchars($cat['category_name']); ?></option>
+                                <?php endwhile; ?>
+                            <?php else : ?>
+                                <option value="1">General</option>
+                            <?php endif; ?>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Location</label>
+                        <input type="text" name="location" id="location" class="form-control" required placeholder="e.g. Colombo / Remote">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Salary Min (LKR)</label>
+                        <input type="number" step="0.01" name="salary_min" id="salary_min" class="form-control" placeholder="e.g. 100000">
+                    </div>
+                    <div class="form-group">
+                        <label>Salary Max (LKR)</label>
+                        <input type="number" step="0.01" name="salary_max" id="salary_max" class="form-control" placeholder="e.g. 200000">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Job Type</label>
+                        <select name="job_type" id="job_type" class="form-control">
+                            <option value="Full-time">Full-time</option>
+                            <option value="Part-time">Part-time</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Expiry Date</label>
+                        <input type="date" name="expiry_date" id="expiry_date" class="form-control" required>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-outline" onclick="closeJobModal()">Cancel</button>
+                    <button type="submit" name="save_job" class="btn btn-primary btn-block">Submit for Approval</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</main>
+
+<!-- JS for Modal Control -->
+<script>
+function openJobModal(jobData = null) {
+    const modal = document.getElementById('jobModal');
+    const modalTitle = document.getElementById('jobModalTitle');
+    
+    if (jobData) {
+        modalTitle.innerText = "Edit Job Posting";
+        document.getElementById('job_id').value = jobData.job_id;
+        document.getElementById('title').value = jobData.title;
+        document.getElementById('description').value = jobData.description;
+        document.getElementById('category_id').value = jobData.category_id;
+        document.getElementById('location').value = jobData.location;
+        document.getElementById('salary_min').value = jobData.salary_min || '';
+        document.getElementById('salary_max').value = jobData.salary_max || '';
+        document.getElementById('job_type').value = jobData.job_type;
+        document.getElementById('expiry_date').value = jobData.expiry_date;
+    } else {
+        modalTitle.innerText = "Post New Job";
+        document.getElementById('job_id').value = '';
+        document.getElementById('title').value = '';
+        document.getElementById('description').value = '';
+        document.getElementById('location').value = '';
+        document.getElementById('salary_min').value = '';
+        document.getElementById('salary_max').value = '';
+        document.getElementById('expiry_date').value = '';
+    }
+    
+    modal.classList.add('open');
+}
+
+function closeJobModal() {
+    document.getElementById('jobModal').classList.remove('open');
+}
+</script>
+
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>
