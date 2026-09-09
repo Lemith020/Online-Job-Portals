@@ -14,27 +14,34 @@ if (!defined('APP_NAME')) define('APP_NAME', 'JobPortal.lk');
 if (!defined('APP_VERSION')) define('APP_VERSION', '1.0.0');
 if (!defined('ADMIN_EMAIL')) define('ADMIN_EMAIL', 'admin@jobportal.lk');
 
+// Determine Base URL (Flexible for all team members)
+if (!defined('BASE_URL')) {
+    // Localhost host & protocol setup
+    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https://" : "http://";
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    
+    // Project root folder detection
+    $script_path = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME']));
+    
+    // Sub-folder trim (If page is inside company, seeker, auth, etc.)
+    $sub_folders = ['/admin', '/auth', '/company', '/seeker', '/reviews', '/config', '/includes'];
+    foreach ($sub_folders as $folder) {
+        if (substr($script_path, -strlen($folder)) === $folder) {
+            $script_path = substr($script_path, 0, -strlen($folder));
+            break;
+        }
+    }
+    
+    $project_root = rtrim($script_path, '/');
+    define('BASE_URL', $protocol . $host . $project_root);
+}
+
 // Database Credentials
 $db_host = "localhost";
 $db_name = "online_job_portal_db";
 $db_user = "root";
 $db_pass = "";
 $db_port = "3306";
-
-// Determine Base URL dynamically
-$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443)) ? "https://" : "http://";
-$host_header = $_SERVER['HTTP_HOST'] ?? 'localhost';
-$script_name = $_SERVER['SCRIPT_NAME'] ?? '';
-$base_dir = rtrim(dirname($script_name), '/\\');
-
-// Normalize if nested in subdirectories
-if (in_array(basename($base_dir), ['admin', 'auth', 'company', 'seeker', 'reviews', 'config', 'includes'])) {
-    $base_dir = dirname($base_dir);
-}
-$base_dir = str_replace('\\', '/', $base_dir);
-if (!defined('BASE_URL')) {
-    define('BASE_URL', rtrim($protocol . $host_header . $base_dir, '/'));
-}
 
 // Global database connection variables
 $conn = null;
