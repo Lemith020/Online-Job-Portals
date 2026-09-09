@@ -150,4 +150,4 @@ if ($company_id > 0 && isset($conn)) {
     <?php endif; ?>
 </div>
 </main> 
-<?php require_once __DIR__ . '/../includes/seeker-footer.php'; ?>
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>
