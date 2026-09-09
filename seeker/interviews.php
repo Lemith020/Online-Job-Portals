@@ -69,4 +69,4 @@ require_once '../includes/seeker-sidebar.php';
     <?php if ($page < $total_pages): ?><a href="?page=<?= $page + 1 ?>">Next</a><?php endif; ?>
 </div>
 
-<?php require_once '../includes/seeker-footer.php'; ?>
+<?php require_once '../includes/footer.php'; ?>

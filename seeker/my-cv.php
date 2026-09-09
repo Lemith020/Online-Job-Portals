@@ -131,4 +131,4 @@ require_once '../includes/seeker-sidebar.php';
     </div>
 </div>
 
-<?php require_once '../includes/seeker-footer.php'; ?>
+<?php require_once '../includes/footer.php'; ?>

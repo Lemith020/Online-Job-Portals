@@ -78,4 +78,4 @@ require_once '../includes/seeker-sidebar.php';
     <p class="settings-note">For security, ensure your passwords are complex and unique.</p>
 </div>
 
-<?php require_once '../includes/seeker-footer.php'; ?>
+<?php require_once '../includes/footer.php'; ?>

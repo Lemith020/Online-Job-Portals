@@ -89,4 +89,4 @@ require_once '../includes/seeker-sidebar.php';
     <button type="submit" class="btn btn-primary btn-full">Save Changes</button>
 </form>
 
-<?php require_once '../includes/seeker-footer.php'; ?>
+<?php require_once '../includes/footer.php'; ?>

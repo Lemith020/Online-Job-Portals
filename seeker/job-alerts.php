@@ -80,4 +80,4 @@ require_once '../includes/seeker-sidebar.php';
     </form>
 </div>
 
-<?php require_once '../includes/seeker-footer.php'; ?>
+<?php require_once '../includes/footer.php'; ?>

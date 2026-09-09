@@ -86,4 +86,4 @@ require_once '../includes/seeker-sidebar.php';
 </div>
 <?php endforeach; ?>
 
-<?php require_once '../includes/seeker-footer.php'; ?>
+<?php require_once '../includes/footer.php'; ?>
