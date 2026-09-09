@@ -13,20 +13,20 @@ job-portal/
 ├── admin/
 │
 ├── company/
-│   ├── profile/
-│   ├── jobs/
-│   ├── applications/
-│   ├── interviews/
-│   └── subscriptions/
+│   ├── profile.php
+│   ├── jobs.php
+│   ├── applications.php
+│   ├── interviews.php
+│   └── subscriptions.php
 │
 ├── seeker/
-│   ├── profile/
-│   ├── cv/
-│   ├── skills/
-│   ├── jobs/
-│   ├── applications/
-│   ├── interviews/
-│   └── alerts/
+│   ├── profile.php
+│   ├── cv.php
+│   ├── skills.php
+│   ├── jobs.php
+│   ├── applications.php
+│   ├── interviews.php
+│   └── alerts.php
 │
 ├── reviews/
 │
