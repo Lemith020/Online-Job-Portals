@@ -29,10 +29,10 @@ body {
 }
 
 body {
-    font-family: 'Segoe UI', Arial, sans-serif;
+    font-family: 'Plus Jakarta Sans', 'Segoe UI', Arial, sans-serif;
     background: var(--bg);
     color: var(--text);
-    overflow: hidden;
+    overflow-x: hidden;
 }
 
 a {
@@ -40,6 +40,14 @@ a {
     color: inherit;
 }
 
+/* Base Flexible Layout support */
+.admin-layout {
+    display: flex;
+    min-height: 100vh;
+    width: 100%;
+}
+
+/* Navigation Top Bar */
 .topnav {
     height: 64px;
     background: var(--dark);
@@ -83,6 +91,7 @@ a {
     background: rgba(255,255,255,0.1);
 }
 
+/* Profile Dropdown Menu */
 .profile-menu {
     position: relative;
 }
@@ -191,6 +200,7 @@ a {
     color: var(--danger);
 }
 
+/* Sidebar & Main Layout Wrapper */
 .layout {
     display: flex;
     height: calc(100vh - 64px);
@@ -232,6 +242,7 @@ a {
     font-size: 14px;
     font-weight: 500;
     margin-bottom: 4px;
+    transition: all 0.2s ease;
 }
 
 .sidebar-menu li a i {
@@ -242,6 +253,11 @@ a {
 
 .sidebar-menu li a:hover {
     background: var(--bg);
+    color: var(--primary);
+}
+
+.sidebar-menu li a:hover i {
+    color: var(--primary);
 }
 
 .sidebar-menu li.active a {
@@ -271,13 +287,14 @@ a {
     flex: 1;
     padding: 28px;
     max-width: 100%;
-    height: calc(100vh - 64px);
+    min-height: calc(100vh - 64px);
     margin-left: 240px;
     overflow-y: auto;
     overflow-x: auto;
     transition: margin-left 0.2s ease;
 }
 
+/* Page Headers & General Components */
 .page-header {
     display: flex;
     align-items: center;
@@ -303,6 +320,7 @@ a {
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
+    transition: background-color 0.2s;
 }
 
 .btn-primary {
@@ -344,11 +362,13 @@ a {
     justify-content: center;
 }
 
+/* Cards & Statistics Grid */
 .card {
     background: var(--white);
     border: 1px solid var(--border);
     border-radius: var(--radius-card);
     padding: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
 }
 
 .stat-grid {
@@ -380,6 +400,35 @@ a {
     color: var(--muted);
 }
 
+/* Dashboard Tables */
+.dash-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+}
+
+.dash-table th {
+    text-align: left;
+    font-size: 12px;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
+    font-weight: 700;
+}
+
+.dash-table td {
+    padding: 14px 12px;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    color: var(--text);
+}
+
+.dash-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* Forms & Inputs */
 .form-group {
     margin-bottom: 16px;
 }
@@ -418,6 +467,7 @@ textarea.form-control {
     gap: 16px;
 }
 
+/* Item Lists & Filters */
 .list-item {
     background: var(--white);
     border: 1px solid var(--border);
@@ -478,6 +528,7 @@ textarea.form-control {
     padding-left: 36px;
 }
 
+/* Badges & Status */
 .badge {
     display: inline-block;
     padding: 4px 12px;
@@ -510,6 +561,7 @@ textarea.form-control {
     color: var(--primary);
 }
 
+/* Tags & Switches */
 .tag-grid {
     display: flex;
     flex-wrap: wrap;
@@ -598,6 +650,7 @@ input:checked + .slider::before {
     color: var(--muted);
 }
 
+/* Alerts & Empty states */
 .empty-state {
     text-align: center;
     padding: 40px;
@@ -621,6 +674,7 @@ input:checked + .slider::before {
     color: var(--danger);
 }
 
+/* Modals */
 .modal-overlay {
     display: none;
     position: fixed;
@@ -670,6 +724,7 @@ input:checked + .slider::before {
     margin-top: 18px;
 }
 
+/* Responsive Media Queries */
 @media (max-width: 768px) {
     .sidebar {
         position: fixed;
@@ -688,7 +743,7 @@ input:checked + .slider::before {
 
     .main-content {
         margin-left: 0;
-        height: calc(100vh - 64px);
+        min-height: calc(100vh - 64px);
         overflow-y: auto;
     }
 

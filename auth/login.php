@@ -32,7 +32,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $authenticated = false;
 
         if ($conn) {
-            
             $stmt = mysqli_prepare($conn, "SELECT user_id, first_name, email, password, role FROM users WHERE email = ?");
             
             if ($stmt) {
@@ -50,6 +49,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         ];
                         $_SESSION['user_id'] = $user['user_id'];
                         $_SESSION['role'] = $user['role'];
+
+                        // Company කෙනෙක් නම් company_id ලබා ගැනීම (Table name matches 'company')
+                        if ($user['role'] === 'company') {
+                            $comp_check = mysqli_prepare($conn, "SELECT company_id FROM company WHERE user_id = ?");
+                            if ($comp_check) {
+                                mysqli_stmt_bind_param($comp_check, "i", $user['user_id']);
+                                mysqli_stmt_execute($comp_check);
+                                $comp_res = mysqli_stmt_get_result($comp_check);
+                                if ($comp_row = mysqli_fetch_assoc($comp_res)) {
+                                    $_SESSION['company_id'] = $comp_row['company_id'];
+                                }
+                            }
+                        }
+
                         $authenticated = true;
                     } else {
                         $error = 'Invalid email or password.';

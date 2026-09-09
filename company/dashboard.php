@@ -1,38 +1,97 @@
 <?php
+/**
+ * JobPortal.lk - Company Dashboard
+ */
+require_once __DIR__ . '/../config/database.php';
+
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Security Check
+if (!isset($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'company') {
+    header("Location: ../auth/login.php");
+    exit();
+}
+
+$user_id = $_SESSION['user_id'];
+$company_id = $_SESSION['company_id'] ?? 0;
+
+
+if ($company_id == 0 && isset($conn)) {
+    $c_q = mysqli_query($conn, "SELECT company_id FROM company WHERE user_id = $user_id");
+    if ($c_q && $c_row = mysqli_fetch_assoc($c_q)) {
+        $company_id = $c_row['company_id'];
+        $_SESSION['company_id'] = $company_id;
+    }
+}
+
 $page_title = "Dashboard";
-$page_css = "dashboard.css";
 $active_page = "dashboard";
-require_once __DIR__ . '/includes/header.php';
-require_once __DIR__ . '/includes/sidebar.php';
 
-$total_jobs_sql = "SELECT COUNT(*) AS total FROM jobs WHERE company_id = $company_id";
-$total_jobs = mysqli_fetch_assoc(mysqli_query($conn, $total_jobs_sql))['total'];
 
-$active_jobs_sql = "SELECT COUNT(*) AS total FROM jobs
-                     WHERE company_id = $company_id AND status = 'approved' AND expiry_date >= CURDATE()";
-$active_jobs = mysqli_fetch_assoc(mysqli_query($conn, $active_jobs_sql))['total'];
+$page_css = BASE_URL . "/assets/css/company_page_css/dashboard.css";
 
-$applicants_sql = "SELECT COUNT(*) AS total FROM applications a
-                    JOIN jobs j ON a.job_id = j.job_id
-                    WHERE j.company_id = $company_id";
-$total_applicants = mysqli_fetch_assoc(mysqli_query($conn, $applicants_sql))['total'];
+require_once __DIR__ . '/../includes/header.php';
+require_once __DIR__ . '/../includes/company-sidebar.php';
 
-$pending_interviews_sql = "SELECT COUNT(*) AS total FROM interviews i
-                            JOIN applications a ON i.app_id = a.app_id
-                            JOIN jobs j ON a.job_id = j.job_id
-                            WHERE j.company_id = $company_id AND i.status = 'Scheduled'";
-$pending_interviews = mysqli_fetch_assoc(mysqli_query($conn, $pending_interviews_sql))['total'];
+$company = ['company_name' => 'Company'];
+$total_jobs = 0;
+$active_jobs = 0;
+$total_applicants = 0;
+$pending_interviews = 0;
+$recent_result = false;
 
-$recent_sql = "SELECT a.app_id, j.title, u.first_name, u.last_name, a.apply_date, a.status
-                FROM applications a
-                JOIN jobs j ON a.job_id = j.job_id
-                JOIN job_seekers s ON a.seeker_id = s.seeker_id
-                JOIN users u ON s.user_id = u.user_id
-                WHERE j.company_id = $company_id
-                ORDER BY a.apply_date DESC
-                LIMIT 5";
-$recent_result = mysqli_query($conn, $recent_sql);
+if ($company_id > 0 && isset($conn)) {
+    // 1. Company Name
+    $comp_query = mysqli_query($conn, "SELECT company_name FROM company WHERE company_id = $company_id");
+    if ($comp_query && mysqli_num_rows($comp_query) > 0) {
+        $company = mysqli_fetch_assoc($comp_query);
+    }
+
+    // 2. Total Jobs
+    $res = mysqli_query($conn, "SELECT COUNT(*) AS total FROM jobs WHERE company_id = $company_id");
+    if ($res) {
+        $row = mysqli_fetch_assoc($res);
+        $total_jobs = $row['total'] ?? 0;
+    }
+
+    // 3. Active Jobs
+    $res = mysqli_query($conn, "SELECT COUNT(*) AS total FROM jobs WHERE company_id = $company_id AND status = 'approved' AND expiry_date >= CURDATE()");
+    if ($res) {
+        $row = mysqli_fetch_assoc($res);
+        $active_jobs = $row['total'] ?? 0;
+    }
+
+    // 4. Total Applicants
+    $res = mysqli_query($conn, "SELECT COUNT(*) AS total FROM applications a JOIN jobs j ON a.job_id = j.job_id WHERE j.company_id = $company_id");
+    if ($res) {
+        $row = mysqli_fetch_assoc($res);
+        $total_applicants = $row['total'] ?? 0;
+    }
+
+    // 5. Pending Interviews
+    $res = mysqli_query($conn, "SELECT COUNT(*) AS total FROM interviews i JOIN applications a ON i.app_id = a.app_id JOIN jobs j ON a.job_id = j.job_id WHERE j.company_id = $company_id AND i.status = 'Scheduled'");
+    if ($res) {
+        $row = mysqli_fetch_assoc($res);
+        $pending_interviews = $row['total'] ?? 0;
+    }
+
+    // 6. Recent Applicants
+    $recent_sql = "SELECT a.app_id, j.title, u.first_name, u.last_name, a.apply_date, a.status
+                   FROM applications a
+                   JOIN jobs j ON a.job_id = j.job_id
+                   JOIN job_seekers s ON a.seeker_id = s.seeker_id
+                   JOIN users u ON s.user_id = u.user_id
+                   WHERE j.company_id = $company_id
+                   ORDER BY a.apply_date DESC
+                   LIMIT 5";
+    $recent_result = mysqli_query($conn, $recent_sql);
+}
 ?>
+
+<main class="main-content">
 
 <div class="page-header">
     <h1>Welcome back, <?php echo htmlspecialchars($company['company_name']); ?>!</h1>
@@ -65,7 +124,7 @@ $recent_result = mysqli_query($conn, $recent_sql);
     <h2 style="margin-bottom: 4px;">Recent Applicants</h2>
     <p style="color: var(--muted); font-size: 13px; margin-bottom: 16px;">Last 5 applicants across all jobs.</p>
 
-    <?php if (mysqli_num_rows($recent_result) > 0) : ?>
+    <?php if ($recent_result && mysqli_num_rows($recent_result) > 0) : ?>
     <table class="dash-table">
         <thead>
             <tr>
@@ -90,5 +149,5 @@ $recent_result = mysqli_query($conn, $recent_sql);
         <div class="empty-state">No applicants yet.</div>
     <?php endif; ?>
 </div>
-
-<?php require_once __DIR__ . '/includes/footer.php'; ?>
+</main> 
+<?php require_once __DIR__ . '/../includes/seeker-footer.php'; ?>

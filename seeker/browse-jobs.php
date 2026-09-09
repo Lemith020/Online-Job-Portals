@@ -1,8 +1,11 @@
 <?php
+
 // seeker/browse-jobs.php
 require_once '../config/database.php';
 require_once '../includes/auth.php';
 require_once '../includes/functions.php';
+
+
 
 $seeker_id = get_seeker_id($conn, $_SESSION['user_id']);
 

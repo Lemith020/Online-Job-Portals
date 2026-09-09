@@ -1019,10 +1019,11 @@ function get_jobs_count($conn, $search = '', $category = '') {
             }
         }
 
+        // වෙනස් කළ තැන: category වෙනුවට category_id සහ bind type එක 'i' ලෙස
         if (!empty($category)) {
-            $sql .= " AND category = ?";
+            $sql .= " AND category_id = ?";
             $params[] = $category;
-            $types .= "s";
+            $types .= "i";
         }
 
         $stmt = mysqli_prepare($conn, $sql);
@@ -1043,7 +1044,8 @@ function get_jobs_count($conn, $search = '', $category = '') {
 // 10.2. Get Jobs List for browse-jobs.php (with Array-to-string fix)
 function get_jobs($conn, $search = '', $category = '', $limit = 10, $offset = 0) {
     if ($conn) {
-        $sql = "SELECT j.*, c.company_name FROM jobs j LEFT JOIN companies c ON j.company_id = c.id WHERE 1=1";
+        // වෙනස් කළ තැන: companies වෙනුවට company, c.id වෙනුවට c.company_id
+        $sql = "SELECT j.*, c.company_name FROM jobs j LEFT JOIN company c ON j.company_id = c.company_id WHERE 1=1";
         $params = [];
         $types = "";
 
@@ -1063,13 +1065,15 @@ function get_jobs($conn, $search = '', $category = '', $limit = 10, $offset = 0)
             }
         }
 
+        // වෙනස් කළ තැන: j.category වෙනුවට j.category_id සහ bind type එක 'i' ලෙස
         if (!empty($category)) {
-            $sql .= " AND j.category = ?";
+            $sql .= " AND j.category_id = ?";
             $params[] = $category;
-            $types .= "s";
+            $types .= "i";
         }
 
-        $sql .= " ORDER BY j.id DESC LIMIT ? OFFSET ?";
+        // වෙනස් කළ තැන: j.id වෙනුවට j.job_id
+        $sql .= " ORDER BY j.job_id DESC LIMIT ? OFFSET ?";
         $params[] = (int)$limit;
         $params[] = (int)$offset;
         $types .= "ii";
@@ -1092,16 +1096,16 @@ function get_jobs($conn, $search = '', $category = '', $limit = 10, $offset = 0)
     }
     return [];
 }
-
 //10.3 Get Categories for browse-jobs.php filter dropdown
 function get_categories($conn) {
     $categories = [];
     if ($conn) {
-        $sql = "SELECT DISTINCT category FROM jobs WHERE category IS NOT NULL AND category != '' ORDER BY category ASC";
+        // වෙනස් කළ තැන: jobs table එකේ category column එක වෙනුවට categories table එකෙන් IDs සහ Names ලබා ගැනීම
+        $sql = "SELECT category_id, category_name FROM categories ORDER BY category_name ASC";
         $res = mysqli_query($conn, $sql);
         if ($res) {
             while ($row = mysqli_fetch_assoc($res)) {
-                $categories[] = $row['category'];
+                $categories[] = $row; // category_id සහ category_name එකතු කරගත් array එකක් ලෙස ලබා දීම
             }
         }
     }
@@ -1111,7 +1115,7 @@ function get_categories($conn) {
 // 11. Get All Jobs List (For browse-jobs.php display)
 function get_all_jobs($conn, $search = '', $category = '', $limit = 10, $offset = 0) {
     if ($conn) {
-        $sql = "SELECT j.*, c.company_name FROM jobs j LEFT JOIN companies c ON j.company_id = c.id WHERE 1=1";
+        $sql = "SELECT j.*, c.company_name FROM jobs j LEFT JOIN company c ON j.company_id = c.company_id WHERE 1=1";
         $params = [];
         $types = "";
 
@@ -1124,14 +1128,14 @@ function get_all_jobs($conn, $search = '', $category = '', $limit = 10, $offset 
         }
 
         if (!empty($category)) {
-            $sql .= " AND j.category = ?";
+            $sql .= " AND j.category_id = ?";
             $params[] = $category;
-            $types .= "s";
+            $types .= "i";
         }
 
-        $sql .= " ORDER BY j.id DESC LIMIT ? OFFSET ?";
-        $params[] = $limit;
-        $params[] = $offset;
+        $sql .= " ORDER BY j.job_id DESC LIMIT ? OFFSET ?";
+        $params[] = (int)$limit;
+        $params[] = (int)$offset;
         $types .= "ii";
 
         $stmt = mysqli_prepare($conn, $sql);
@@ -1150,7 +1154,6 @@ function get_all_jobs($conn, $search = '', $category = '', $limit = 10, $offset 
     }
     return [];
 }
-
 //12 Seeker profile
 function get_seeker_categories($conn, $seeker_id) {
     $categories = [];

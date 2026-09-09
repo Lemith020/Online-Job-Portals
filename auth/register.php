@@ -14,7 +14,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($_POST['email'] ?? '');
     $password = trim($_POST['password'] ?? '');
     
-    
     $raw_role = $_POST['role'] ?? 'seeker';
     $role = ($raw_role === 'seeker') ? 'job_seeker' : $raw_role;
     
@@ -39,7 +38,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if ($role === 'job_seeker') {
                         @mysqli_query($conn, "INSERT INTO job_seekers (user_id) VALUES ($new_id)");
                     } elseif ($role === 'company') {
-                        @mysqli_query($conn, "INSERT INTO companies (user_id, company_name, owner_email, status) VALUES ($new_id, '$name', '$email', 'Pending Approval')");
+                        // ✅ FIXED: Correct columns matching your 'company' table schema
+                        $comp_stmt = mysqli_prepare($conn, "INSERT INTO company (user_id, company_name) VALUES (?, ?)");
+                        if ($comp_stmt) {
+                            mysqli_stmt_bind_param($comp_stmt, "is", $new_id, $name);
+                            mysqli_stmt_execute($comp_stmt);
+                        }
                     }
                     
                     $success = 'Account created successfully! You can now log in.';
