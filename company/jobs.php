@@ -21,18 +21,14 @@ $company_id = $_SESSION['company_id'] ?? 0;
 
 // Fallback: company_id සොයා ගැනීම
 if ($company_id == 0 && isset($conn) && $conn) {
-    $c_q = mysqli_query($conn, "SELECT company_id FROM company WHERE user_id = $user_id");
+   $c_q = mysqli_query($conn, "SELECT company_id FROM company WHERE user_id = $user_id");
     if ($c_q && $c_row = mysqli_fetch_assoc($c_q)) {
-        $company_id = $c_row['company_id'];
-        $_SESSION['company_id'] = $company_id;
+        $company_id = (int)$c_row['company_id'];
+        $_SESSION['company_id'] = $company_id; // Session එකට Save කිරීම
     }
 }
 
-$page_title = "Manage Jobs";
-$active_page = "jobs";
 
-require_once __DIR__ . '/../includes/header.php';
-require_once __DIR__ . '/../includes/company-sidebar.php';
 
 // ---- Handle Add / Edit job form submit ----
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_job'])) {
@@ -40,10 +36,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_job'])) {
     $description = mysqli_real_escape_string($conn, $_POST['description']);
     $category_id = (int) $_POST['category_id'];
     $location    = mysqli_real_escape_string($conn, $_POST['location']);
-    $salary_min  = !empty($_POST['salary_min']) ? (float) $_POST['salary_min'] : "NULL";
-    $salary_max  = !empty($_POST['salary_max']) ? (float) $_POST['salary_max'] : "NULL";
+
+    $salary_min  = (!empty($_POST['salary_min']) && is_numeric($_POST['salary_min'])) ? (float)$_POST['salary_min'] : "NULL";
+    $salary_max  = (!empty($_POST['salary_max']) && is_numeric($_POST['salary_max'])) ? (float)$_POST['salary_max'] : "NULL";
+
     $job_type    = mysqli_real_escape_string($conn, $_POST['job_type']);
     $expiry_date = mysqli_real_escape_string($conn, $_POST['expiry_date']);
+
+    if ($company_id <= 0) {
+        die("Error: No company profile found for this user account. Please contact support or setup your company profile first.");
+    }
 
     if (!empty($_POST['job_id'])) {
         $job_id = (int) $_POST['job_id'];
@@ -63,9 +65,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_job'])) {
                 VALUES
                     ($company_id, $category_id, '$title', '$description', '$location', $salary_min, $salary_max, '$job_type', CURDATE(), '$expiry_date', 'pending')";
     }
-    mysqli_query($conn, $sql);
-    header("Location: jobs.php");
-    exit;
+    if (mysqli_query($conn, $sql)) {
+        header("Location: jobs.php?msg=success");
+        exit();
+    } else {
+        die("Database Error: " . mysqli_error($conn));
+    }
 }
 
 // ---- Handle Delete ----
@@ -75,6 +80,13 @@ if (isset($_GET['delete'])) {
     header("Location: jobs.php");
     exit;
 }
+
+
+$page_title = "Manage Jobs";
+$active_page = "jobs";
+
+require_once __DIR__ . '/../includes/header.php';
+require_once __DIR__ . '/../includes/company-sidebar.php';
 
 // ---- Filters ----
 $status_filter = isset($_GET['status']) ? $_GET['status'] : 'all';

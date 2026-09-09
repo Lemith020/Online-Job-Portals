@@ -336,53 +336,54 @@ function delete_company($id) {
 // -------------------------------------------------------------
 function get_all_jobs_admin($status_filter = '', $category_filter = '', $search = '') {
     global $conn;
+
+    $jobs = [];
+
     if ($conn) {
-        $sql = "SELECT j.id, j.title, j.company_name, j.location, j.job_type, j.salary_range, j.status, j.posted_date, c.name AS category_name
+        // Real Database Schema එකට අදාළ Columns සහ Joins
+        $sql = "SELECT 
+                    j.job_id AS id, 
+                    j.title, 
+                    comp.company_name, 
+                    j.location, 
+                    j.job_type, 
+                    CONCAT('Rs. ', FORMAT(j.salary_min, 0), ' - Rs. ', FORMAT(j.salary_max, 0)) AS salary_range, 
+                    j.status, 
+                    j.posted_date, 
+                    c.category_name
                 FROM jobs j
-                LEFT JOIN categories c ON j.category_id = c.id
+                LEFT JOIN categories c ON j.category_id = c.category_id
+                LEFT JOIN company comp ON j.company_id = comp.company_id
                 WHERE 1=1";
+
         if (!empty($status_filter)) {
-            $sql .= " AND j.status = '" . mysqli_real_escape_string($conn, $status_filter) . "'";
+            $status_safe = mysqli_real_escape_string($conn, $status_filter);
+            $sql .= " AND (j.status = '$status_safe' OR j.status LIKE '$status_safe%')";
         }
+
         if (!empty($category_filter)) {
-            $sql .= " AND c.name = '" . mysqli_real_escape_string($conn, $category_filter) . "'";
+            $cat_safe = mysqli_real_escape_string($conn, $category_filter);
+            $sql .= " AND c.category_name = '$cat_safe'";
         }
+
         if (!empty($search)) {
             $s = mysqli_real_escape_string($conn, $search);
-            $sql .= " AND (j.title LIKE '%$s%' OR j.company_name LIKE '%$s%' OR j.location LIKE '%$s%')";
+            $sql .= " AND (j.title LIKE '%$s%' OR comp.company_name LIKE '%$s%' OR j.location LIKE '%$s%')";
         }
-        $sql .= " ORDER BY j.id DESC";
-        $res = @mysqli_query($conn, $sql);
+
+        $sql .= " ORDER BY j.job_id DESC";
+
+        $res = mysqli_query($conn, $sql);
+
         if ($res && mysqli_num_rows($res) > 0) {
-            $jobs = [];
-            while ($row = mysqli_fetch_assoc($res)) $jobs[] = $row;
-            return $jobs;
+            while ($row = mysqli_fetch_assoc($res)) {
+                $jobs[] = $row;
+            }
         }
     }
 
-    $mock_jobs = [
-        ['id' => 1, 'title' => 'Senior Full Stack Engineer', 'company_name' => 'Virtusa (Pvt) Ltd', 'category_name' => 'Software Engineering', 'location' => 'Colombo 07', 'job_type' => 'Full-time', 'salary_range' => 'Rs. 250,000 - Rs. 400,000', 'status' => 'Approved', 'posted_date' => '2026-03-25 10:00:00'],
-        ['id' => 2, 'title' => 'DevOps & Cloud Architect', 'company_name' => 'Dialog Axiata PLC', 'category_name' => 'Cloud & DevOps', 'location' => 'Colombo 02', 'job_type' => 'Full-time', 'salary_range' => 'Rs. 300,000 - Rs. 500,000', 'status' => 'Approved', 'posted_date' => '2026-03-26 14:30:00'],
-        ['id' => 3, 'title' => 'UI/UX Product Designer', 'company_name' => 'WSO2 Lanka', 'category_name' => 'Design & Creative', 'location' => 'Colombo 03', 'job_type' => 'Remote', 'salary_range' => 'Rs. 180,000 - Rs. 280,000', 'status' => 'Approved', 'posted_date' => '2026-03-27 09:15:00'],
-        ['id' => 4, 'title' => 'Digital Marketing Lead', 'company_name' => 'Apex Digital Media', 'category_name' => 'Marketing & Sales', 'location' => 'Nugegoda', 'job_type' => 'Full-time', 'salary_range' => 'Rs. 120,000 - Rs. 180,000', 'status' => 'Pending Approval', 'posted_date' => '2026-03-29 11:20:00'],
-        ['id' => 5, 'title' => 'Junior QA Automation Tester', 'company_name' => 'Virtusa (Pvt) Ltd', 'category_name' => 'Software Engineering', 'location' => 'Colombo 07', 'job_type' => 'Contract', 'salary_range' => 'Rs. 90,000 - Rs. 140,000', 'status' => 'Pending Approval', 'posted_date' => '2026-03-30 16:45:00'],
-        ['id' => 6, 'title' => 'Cybersecurity Analyst', 'company_name' => 'Dialog Axiata PLC', 'category_name' => 'Security', 'location' => 'Colombo 02', 'job_type' => 'Full-time', 'salary_range' => 'Rs. 220,000 - Rs. 350,000', 'status' => 'Pending Approval', 'posted_date' => '2026-03-31 08:30:00'],
-        ['id' => 7, 'title' => 'Casino Content Writer (Spam)', 'company_name' => 'Suspicious Corp', 'category_name' => 'Content & Writing', 'location' => 'Online', 'job_type' => 'Remote', 'salary_range' => 'Rs. 500,000', 'status' => 'Rejected', 'posted_date' => '2026-03-20 12:00:00']
-    ];
-
-    if (!empty($status_filter)) {
-        $mock_jobs = array_values(array_filter($mock_jobs, fn($j) => $j['status'] === $status_filter));
-    }
-    if (!empty($category_filter)) {
-        $mock_jobs = array_values(array_filter($mock_jobs, fn($j) => $j['category_name'] === $category_filter));
-    }
-    if (!empty($search)) {
-        $s = strtolower($search);
-        $mock_jobs = array_values(array_filter($mock_jobs, fn($j) => str_contains(strtolower($j['title']), $s) || str_contains(strtolower($j['company_name']), $s)));
-    }
-    return $mock_jobs;
+    return $jobs; // Database එකෙන් ලැබෙන Real Data හෝ Empty Array එක පමණක් Return වේ
 }
-
 function update_job_status($id, $status) {
     global $conn;
     if ($conn) {
@@ -999,31 +1000,72 @@ function get_recent_applications($conn, $seeker_id, $limit = 5) {
 // 1o.1. Get Jobs Count for browse-jobs.php pagination
 function get_jobs_count($conn, $search = '', $category = '') {
     if ($conn) {
-        $sql = "SELECT COUNT(*) as total FROM jobs WHERE 1=1";
+        // $search එක array එකක් විදිහට ($filters) ආවොත් ඒකෙන් values ලබාගැනීම
+        $filters = is_array($search) ? $search : [];
+        $keyword  = is_array($search) ? ($filters['keyword'] ?? '') : $search;
+        $category = is_array($search) ? ($filters['category'] ?? '') : $category;
+        $location = $filters['location'] ?? '';
+        $job_type = $filters['job_type'] ?? '';
+        $s_min    = $filters['salary_min'] ?? '';
+        $s_max    = $filters['salary_max'] ?? '';
+
+        $sql = "SELECT COUNT(*) as total 
+                FROM jobs j 
+                LEFT JOIN company c ON j.company_id = c.company_id 
+                WHERE 1=1";
+
         $params = [];
         $types = "";
 
-        if (!empty($search)) {
-            if (is_array($search)) {
-                $search = trim(implode(' ', $search));
+        // 1. Keyword Search (Title, Description, Company Name)
+        if (!empty($keyword)) {
+            if (is_array($keyword)) {
+                $keyword = trim(implode(' ', $keyword));
             } else {
-                $search = trim($search);
+                $keyword = trim($keyword);
             }
 
-            if ($search !== '') {
-                $sql .= " AND (title LIKE ? OR description LIKE ?)";
-                $searchTerm = "%{$search}%";
+            if ($keyword !== '') {
+                $sql .= " AND (j.title LIKE ? OR j.description LIKE ? OR c.company_name LIKE ?)";
+                $searchTerm = "%{$keyword}%";
                 $params[] = $searchTerm;
                 $params[] = $searchTerm;
-                $types .= "ss";
+                $params[] = $searchTerm;
+                $types .= "sss";
             }
         }
 
-        // වෙනස් කළ තැන: category වෙනුවට category_id සහ bind type එක 'i' ලෙස
+        // 2. Category Filter
         if (!empty($category)) {
-            $sql .= " AND category_id = ?";
-            $params[] = $category;
+            $sql .= " AND j.category_id = ?";
+            $params[] = (int)$category;
             $types .= "i";
+        }
+
+        // 3. Location Filter
+        if (!empty($location)) {
+            $sql .= " AND j.location LIKE ?";
+            $params[] = "%" . trim($location) . "%";
+            $types .= "s";
+        }
+
+        // 4. Job Type Filter
+        if (!empty($job_type)) {
+            $sql .= " AND j.job_type = ?";
+            $params[] = trim($job_type);
+            $types .= "s";
+        }
+
+        // 5. Salary Range Filter
+        if (!empty($s_min)) {
+            $sql .= " AND j.salary_max >= ?";
+            $params[] = (float)$s_min;
+            $types .= "d";
+        }
+        if (!empty($s_max)) {
+            $sql .= " AND j.salary_min <= ?";
+            $params[] = (float)$s_max;
+            $types .= "d";
         }
 
         $stmt = mysqli_prepare($conn, $sql);
@@ -1042,58 +1084,85 @@ function get_jobs_count($conn, $search = '', $category = '') {
 }
 
 // 10.2. Get Jobs List for browse-jobs.php (with Array-to-string fix)
-function get_jobs($conn, $search = '', $category = '', $limit = 10, $offset = 0) {
-    if ($conn) {
-        // වෙනස් කළ තැන: companies වෙනුවට company, c.id වෙනුවට c.company_id
-        $sql = "SELECT j.*, c.company_name FROM jobs j LEFT JOIN company c ON j.company_id = c.company_id WHERE 1=1";
-        $params = [];
-        $types = "";
+function get_jobs($conn, $filters = [], $limit = 5, $offset = 0) {
+    if (!$conn) return [];
 
-        if (!empty($search)) {
-            if (is_array($search)) {
-                $search = trim(implode(' ', $search));
-            } else {
-                $search = trim($search);
-            }
+    $sql = "SELECT j.*, c.company_name, cat.category_name 
+            FROM jobs j 
+            LEFT JOIN company c ON j.company_id = c.company_id 
+            LEFT JOIN categories cat ON j.category_id = cat.category_id 
+            WHERE 1=1";
 
-            if ($search !== '') {
-                $sql .= " AND (j.title LIKE ? OR j.description LIKE ?)";
-                $searchTerm = "%{$search}%";
-                $params[] = $searchTerm;
-                $params[] = $searchTerm;
-                $types .= "ss";
-            }
-        }
+    $params = [];
+    $types = "";
 
-        // වෙනස් කළ තැන: j.category වෙනුවට j.category_id සහ bind type එක 'i' ලෙස
-        if (!empty($category)) {
-            $sql .= " AND j.category_id = ?";
-            $params[] = $category;
-            $types .= "i";
-        }
+    // 1. Status Filter (Approved සහ Pending දෙකම පෙන්වයි - Project Testing සඳහා)
+    // Production එකේදී $sql .= " AND j.status = 'approved'"; ලෙස වෙනස් කළ හැක
+    $sql .= " AND (j.status = 'approved' OR j.status = 'pending' OR j.status IS NULL OR j.status = '')";
 
-        // වෙනස් කළ තැන: j.id වෙනුවට j.job_id
-        $sql .= " ORDER BY j.job_id DESC LIMIT ? OFFSET ?";
-        $params[] = (int)$limit;
-        $params[] = (int)$offset;
-        $types .= "ii";
-
-        $stmt = mysqli_prepare($conn, $sql);
-        if ($stmt) {
-            if (!empty($params)) {
-                mysqli_stmt_bind_param($stmt, $types, ...$params);
-            }
-            mysqli_stmt_execute($stmt);
-            $res = mysqli_stmt_get_result($stmt);
-            $rows = [];
-            if ($res) {
-                while ($row = mysqli_fetch_assoc($res)) {
-                    $rows[] = $row;
-                }
-            }
-            return $rows;
-        }
+    // 2. Keyword Filter (Title, Description, Company Name)
+    if (!empty($filters['keyword'])) {
+        $kw = "%" . trim($filters['keyword']) . "%";
+        $sql .= " AND (j.title LIKE ? OR j.description LIKE ? OR c.company_name LIKE ?)";
+        $params[] = $kw; $params[] = $kw; $params[] = $kw;
+        $types .= "sss";
     }
+
+    // 3. Location Filter
+    if (!empty($filters['location'])) {
+        $sql .= " AND j.location LIKE ?";
+        $params[] = "%" . trim($filters['location']) . "%";
+        $types .= "s";
+    }
+
+    // 4. Category Filter
+    if (!empty($filters['category'])) {
+        $sql .= " AND j.category_id = ?";
+        $params[] = (int)$filters['category'];
+        $types .= "i";
+    }
+
+    // 5. Job Type Filter
+    if (!empty($filters['job_type'])) {
+        $sql .= " AND j.job_type = ?";
+        $params[] = trim($filters['job_type']);
+        $types .= "s";
+    }
+
+    // 6. Salary Range Filter
+    if (!empty($filters['salary_min'])) {
+        $sql .= " AND j.salary_max >= ?";
+        $params[] = (float)$filters['salary_min'];
+        $types .= "d";
+    }
+    if (!empty($filters['salary_max'])) {
+        $sql .= " AND j.salary_min <= ?";
+        $params[] = (float)$filters['salary_max'];
+        $types .= "d";
+    }
+
+    // Pagination Limit & Offset
+    $sql .= " ORDER BY j.job_id DESC LIMIT ? OFFSET ?";
+    $params[] = (int)$limit;
+    $params[] = (int)$offset;
+    $types .= "ii";
+
+    $stmt = mysqli_prepare($conn, $sql);
+    if ($stmt) {
+        if (!empty($params)) {
+            mysqli_stmt_bind_param($stmt, $types, ...$params);
+        }
+        mysqli_stmt_execute($stmt);
+        $res = mysqli_stmt_get_result($stmt);
+        $rows = [];
+        if ($res) {
+            while ($row = mysqli_fetch_assoc($res)) {
+                $rows[] = $row;
+            }
+        }
+        return $rows;
+    }
+
     return [];
 }
 //10.3 Get Categories for browse-jobs.php filter dropdown
@@ -1113,24 +1182,56 @@ function get_categories($conn) {
 }
 
 // 11. Get All Jobs List (For browse-jobs.php display)
-function get_all_jobs($conn, $search = '', $category = '', $limit = 10, $offset = 0) {
+function get_all_jobs($conn, $keyword = '', $category = '', $limit = 10, $offset = 0, $location = '', $job_type = '') {
     if ($conn) {
-        $sql = "SELECT j.*, c.company_name FROM jobs j LEFT JOIN company c ON j.company_id = c.company_id WHERE 1=1";
+        $sql = "SELECT j.*, c.company_name, cat.category_name 
+                FROM jobs j 
+                LEFT JOIN company c ON j.company_id = c.company_id 
+                LEFT JOIN categories cat ON j.category_id = cat.category_id 
+                WHERE 1=1"; 
+
         $params = [];
         $types = "";
 
-        if (!empty($search)) {
-            $sql .= " AND (j.title LIKE ? OR j.description LIKE ?)";
-            $searchTerm = "%{$search}%";
-            $params[] = $searchTerm;
-            $params[] = $searchTerm;
-            $types .= "ss";
+        // 1. Keyword Search (Title, Description, Company Name)
+        if (!empty($keyword)) {
+            if (is_array($keyword)) {
+                $keyword = trim(implode(' ', $keyword));
+            } else {
+                $keyword = trim($keyword);
+            }
+
+            if ($keyword !== '') {
+                $sql .= " AND (j.title LIKE ? OR j.description LIKE ? OR c.company_name LIKE ?)";
+                $searchTerm = "%{$keyword}%";
+                $params[] = $searchTerm;
+                $params[] = $searchTerm;
+                $params[] = $searchTerm;
+                $types .= "sss";
+            }
         }
 
-        if (!empty($category)) {
+        // 2. Location Filter (URL එකෙන් Matara ආවොත් ඒක Filter වීම)
+        if (!empty($location)) {
+            $location = trim($location);
+            $sql .= " AND j.location LIKE ?";
+            $locTerm = "%{$location}%";
+            $params[] = $locTerm;
+            $types .= "s";
+        }
+
+        // 3. Category Filter
+        if (!empty($category) && $category !== 'all') {
             $sql .= " AND j.category_id = ?";
-            $params[] = $category;
+            $params[] = (int)$category;
             $types .= "i";
+        }
+
+        // 4. Job Type Filter
+        if (!empty($job_type) && $job_type !== 'all') {
+            $sql .= " AND j.job_type = ?";
+            $params[] = trim($job_type);
+            $types .= "s";
         }
 
         $sql .= " ORDER BY j.job_id DESC LIMIT ? OFFSET ?";
@@ -1139,11 +1240,16 @@ function get_all_jobs($conn, $search = '', $category = '', $limit = 10, $offset 
         $types .= "ii";
 
         $stmt = mysqli_prepare($conn, $sql);
+        
         if ($stmt) {
-            mysqli_stmt_bind_param($stmt, $types, ...$params);
+            if (!empty($params)) {
+                mysqli_stmt_bind_param($stmt, $types, ...$params);
+            }
+            
             mysqli_stmt_execute($stmt);
             $res = mysqli_stmt_get_result($stmt);
             $rows = [];
+            
             if ($res) {
                 while ($row = mysqli_fetch_assoc($res)) {
                     $rows[] = $row;
