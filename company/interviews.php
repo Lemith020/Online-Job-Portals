@@ -1,8 +1,4 @@
 <?php
-/**
- * JobPortal.lk - Company Interviews Management
- */
-
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../includes/functions.php';
 
@@ -10,13 +6,11 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Security Check
 if (!isset($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'company') {
     header("Location: " . BASE_URL . "/auth/login.php");
     exit();
 }
 
-// ✅ FIX: Company ID Retrieval (Warning $company_id විසඳුම)
 $user_id = $_SESSION['user_id'];
 $company_id = $_SESSION['company_id'] ?? 0;
 
@@ -28,13 +22,6 @@ if ($company_id == 0 && isset($conn) && $conn) {
     }
 }
 
-$page_title = "Interviews";
-$active_page = "interviews";
-
-require_once __DIR__ . '/../includes/header.php';
-require_once __DIR__ . '/../includes/company-sidebar.php';
-
-// ---- Schedule new interview ----
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['schedule_interview'])) {
     $app_id = (int) $_POST['app_id'];
     $interviewer_id = (int) $_POST['interviewer_id'];
@@ -50,7 +37,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['schedule_interview']))
     exit;
 }
 
-// ---- Update interview status (Complete / Cancel) ----
 if (isset($_GET['set_status']) && isset($_GET['interview_id'])) {
     $new_status = mysqli_real_escape_string($conn, $_GET['set_status']);
     $interview_id = (int) $_GET['interview_id'];
@@ -59,7 +45,6 @@ if (isset($_GET['set_status']) && isset($_GET['interview_id'])) {
     exit;
 }
 
-// ---- Add interviewer ----
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_interviewer'])) {
     $name = mysqli_real_escape_string($conn, $_POST['interviewer_name']);
     $contact = mysqli_real_escape_string($conn, $_POST['contact_number']);
@@ -68,7 +53,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_interviewer'])) {
     exit;
 }
 
-// ---- Delete interviewer ----
 if (isset($_GET['delete_interviewer'])) {
     $id = (int) $_GET['delete_interviewer'];
     mysqli_query($conn, "DELETE FROM interviewer WHERE interviewer_id = $id AND company_id = $company_id");
@@ -76,7 +60,12 @@ if (isset($_GET['delete_interviewer'])) {
     exit;
 }
 
-// ---- Data for listing ----
+$page_title = "Interviews";
+$active_page = "interviews";
+
+require_once __DIR__ . '/../includes/header.php';
+require_once __DIR__ . '/../includes/company-sidebar.php';
+
 $interviews_sql = "SELECT i.*, u.first_name, u.last_name, j.title AS job_title, iv.interviewer_name
                     FROM interviews i
                     JOIN applications a ON i.app_id = a.app_id
@@ -90,7 +79,6 @@ $interviews_result = $conn ? mysqli_query($conn, $interviews_sql) : false;
 
 $interviewers_result = $conn ? mysqli_query($conn, "SELECT * FROM interviewer WHERE company_id = $company_id ORDER BY interviewer_name") : false;
 
-// Applications eligible for interview scheduling (reviewed / accepted)
 $preselect_app = isset($_GET['app_id']) ? (int) $_GET['app_id'] : 0;
 $eligible_apps_sql = "SELECT a.app_id, u.first_name, u.last_name, j.title AS job_title
                        FROM applications a
@@ -181,7 +169,6 @@ $eligible_apps_result = $conn ? mysqli_query($conn, $eligible_apps_sql) : false;
         </div>
     </div>
 
-    <!-- Schedule Interview Modal -->
     <div class="modal-overlay" id="interviewModal">
         <div class="modal-box">
             <div class="modal-header">
