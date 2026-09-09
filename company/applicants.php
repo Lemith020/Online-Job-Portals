@@ -1,84 +1,92 @@
 <?php
-/**
- * JobPortal.lk - Company Applicants Management
- */
+            /**
+             * JobPortal.lk - Company Applicants Management
+             */
 
-require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../includes/functions.php';
+            require_once __DIR__ . '/../config/database.php';
+            require_once __DIR__ . '/../includes/functions.php';
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
 
-// Security Check
-if (!isset($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'company') {
-    header("Location: " . BASE_URL . "/auth/login.php");
-    exit();
-}
+            // Security Check
+            if (!isset($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'company') {
+                header("Location: " . BASE_URL . "/auth/login.php");
+                exit();
+            }
 
-// Company ID Retrieval
-$user_id = $_SESSION['user_id'];
-$company_id = $_SESSION['company_id'] ?? 0;
+            // Company ID Retrieval
+            $user_id = $_SESSION['user_id'];
+            $company_id = $_SESSION['company_id'] ?? 0;
 
-if ($company_id == 0 && isset($conn) && $conn) {
-    $c_q = mysqli_query($conn, "SELECT company_id FROM company WHERE user_id = $user_id");
-    if ($c_q && $c_row = mysqli_fetch_assoc($c_q)) {
-        $company_id = $c_row['company_id'];
-        $_SESSION['company_id'] = $company_id;
-    }
-}
+            if ($company_id == 0 && isset($conn) && $conn) {
+                $c_q = mysqli_query($conn, "SELECT company_id FROM company WHERE user_id = $user_id");
+                if ($c_q && $c_row = mysqli_fetch_assoc($c_q)) {
+                    $company_id = $c_row['company_id'];
+                    $_SESSION['company_id'] = $company_id;
+                }
+            }
 
-$page_title = "Applicants";
-$active_page = "applicants";
+            // -------------------------------------------------------------------
+            // 1. UPDATE APPLICATION STATUS (HTML HEADERS )
+            // -------------------------------------------------------------------
+            if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_status'])) {
+                $app_id = (int) $_POST['app_id'];
+                $new_status = mysqli_real_escape_string($conn, $_POST['status']);
 
-require_once __DIR__ . '/../includes/header.php';
-require_once __DIR__ . '/../includes/company-sidebar.php';
+                $check_sql = "SELECT a.app_id FROM applications a
+                            JOIN jobs j ON a.job_id = j.job_id
+                            WHERE a.app_id = $app_id AND j.company_id = $company_id";
+                if ($conn && mysqli_num_rows(mysqli_query($conn, $check_sql)) > 0) {
+                    mysqli_query($conn, "UPDATE applications SET status = '$new_status' WHERE app_id = $app_id");
+                }
+                
+                // Header redirect 
+                $qs = (isset($_POST['redirect_qs']) && !empty($_POST['redirect_qs'])) ? '?' . $_POST['redirect_qs'] : '';
+                header("Location: applicants.php" . $qs);
+                exit;
+            }
 
-// ---- Update application status ----
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_status'])) {
-    $app_id = (int) $_POST['app_id'];
-    $new_status = mysqli_real_escape_string($conn, $_POST['status']);
+            // -------------------------------------------------------------------
+            // 2. HTML HEADERS & SIDEBAR INCLUDES (Redirect logic )
+            // -------------------------------------------------------------------
+            $page_title = "Applicants";
+            $active_page = "applicants";
 
-    $check_sql = "SELECT a.app_id FROM applications a
-                  JOIN jobs j ON a.job_id = j.job_id
-                  WHERE a.app_id = $app_id AND j.company_id = $company_id";
-    if ($conn && mysqli_num_rows(mysqli_query($conn, $check_sql)) > 0) {
-        mysqli_query($conn, "UPDATE applications SET status = '$new_status' WHERE app_id = $app_id");
-    }
-    header("Location: applicants.php" . (isset($_POST['redirect_qs']) ? '?' . $_POST['redirect_qs'] : ''));
-    exit;
-}
+            require_once __DIR__ . '/../includes/header.php';
+            require_once __DIR__ . '/../includes/company-sidebar.php';
 
-// ---- Filters ----
-$job_filter = isset($_GET['job_id']) ? (int) $_GET['job_id'] : 0;
-$status_filter = isset($_GET['status']) ? $_GET['status'] : 'all';
-$search = isset($_GET['q']) ? trim($_GET['q']) : '';
-$sort = isset($_GET['sort']) ? $_GET['sort'] : 'newest';
+            // ---- Filters ----
+            $job_filter = isset($_GET['job_id']) ? (int) $_GET['job_id'] : 0;
+            $status_filter = isset($_GET['status']) ? $_GET['status'] : 'all';
+            $search = isset($_GET['q']) ? trim($_GET['q']) : '';
+            $sort = isset($_GET['sort']) ? $_GET['sort'] : 'newest';
 
-$where = "WHERE j.company_id = $company_id";
-if ($job_filter > 0) $where .= " AND j.job_id = $job_filter";
-if ($status_filter != 'all') {
-    $status_safe = mysqli_real_escape_string($conn, $status_filter);
-    $where .= " AND a.status = '$status_safe'";
-}
-if ($search != '') {
-    $search_safe = mysqli_real_escape_string($conn, $search);
-    $where .= " AND (u.first_name LIKE '%$search_safe%' OR u.last_name LIKE '%$search_safe%')";
-}
+            $where = "WHERE j.company_id = $company_id";
+            if ($job_filter > 0) $where .= " AND j.job_id = $job_filter";
+            if ($status_filter != 'all') {
+                $status_safe = mysqli_real_escape_string($conn, $status_filter);
+                $where .= " AND a.status = '$status_safe'";
+            }
+            if ($search != '') {
+                $search_safe = mysqli_real_escape_string($conn, $search);
+                $where .= " AND (u.first_name LIKE '%$search_safe%' OR u.last_name LIKE '%$search_safe%')";
+            }
 
-$order = "ORDER BY a.apply_date DESC";
-if ($sort == 'oldest') $order = "ORDER BY a.apply_date ASC";
+            $order = "ORDER BY a.apply_date DESC";
+            if ($sort == 'oldest') $order = "ORDER BY a.apply_date ASC";
 
-$applicants_sql = "SELECT a.*, u.first_name, u.last_name, s.phone, s.bio, j.title AS job_title, cv.file_path
-                    FROM applications a
-                    JOIN job_seekers s ON a.seeker_id = s.seeker_id
-                    JOIN users u ON s.user_id = u.user_id
-                    JOIN jobs j ON a.job_id = j.job_id
-                    LEFT JOIN cvs cv ON a.cv_id = cv.cv_id
-                    $where $order";
-$applicants_result = $conn ? mysqli_query($conn, $applicants_sql) : false;
+            $applicants_sql = "SELECT a.*, u.first_name, u.last_name, s.phone, s.bio, j.title AS job_title, cv.file_path
+                                FROM applications a
+                                JOIN job_seekers s ON a.seeker_id = s.seeker_id
+                                JOIN users u ON s.user_id = u.user_id
+                                JOIN jobs j ON a.job_id = j.job_id
+                                LEFT JOIN cvs cv ON a.cv_id = cv.cv_id
+                                $where $order";
+            $applicants_result = $conn ? mysqli_query($conn, $applicants_sql) : false;
 
-$jobs_result = $conn ? mysqli_query($conn, "SELECT job_id, title FROM jobs WHERE company_id = $company_id ORDER BY title") : false;
+            $jobs_result = $conn ? mysqli_query($conn, "SELECT job_id, title FROM jobs WHERE company_id = $company_id ORDER BY title") : false;
 ?>
 
 <main class="main-content">
@@ -139,31 +147,45 @@ $jobs_result = $conn ? mysqli_query($conn, "SELECT job_id, title FROM jobs WHERE
             </div>
 
             <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-                <span class="badge badge-<?php echo strtolower($app['status'] ?? 'pending'); ?>"><?php echo ucfirst($app['status'] ?? 'pending'); ?></span>
+                            <span class="badge badge-<?php echo strtolower($app['status'] ?? 'pending'); ?>"><?php echo ucfirst($app['status'] ?? 'pending'); ?></span>
 
-                <?php if (!empty($app['file_path'])) : ?>
-                <a href="<?php echo BASE_URL . '/' . htmlspecialchars($app['file_path']); ?>" target="_blank" class="btn btn-outline btn-sm">
-                    <i class="fa-solid fa-file"></i> View CV
-                </a>
-                <?php endif; ?>
+                            <?php if (!empty($app['file_path'])) : ?>
+                                <?php 
+                                    
+                                    $clean_path = ltrim(str_replace('../', '', $app['file_path']), '/');
+                                    
+                                
+                                    $path_parts = explode('/', $clean_path);
+                                    $encoded_parts = array_map('rawurlencode', $path_parts);
+                                    $encoded_path = implode('/', $encoded_parts);
+                                    
+                                    
+                                    $download_url = BASE_URL . '/' . $encoded_path;
+                                ?>
+                            <a href="<?php echo $download_url; ?>" 
+                            
+                            download="<?php echo htmlspecialchars(basename($app['file_path'])); ?>" 
+                            class="btn btn-outline btn-sm">
+                                <i class="fa-solid fa-download"></i> Download CV
+                            </a>
+                        <?php endif; ?>
+                            <form method="post" class="status-form" style="margin:0;">
+                                <input type="hidden" name="app_id" value="<?php echo $app['app_id']; ?>">
+                                <input type="hidden" name="redirect_qs" value="<?php echo htmlspecialchars($_SERVER['QUERY_STRING']); ?>">
+                                <select name="status" class="form-control btn-sm" onchange="this.form.submit()">
+                                    <option value="pending" <?php echo ($app['status'] ?? '') == 'pending' ? 'selected' : ''; ?>>Pending</option>
+                                    <option value="reviewed" <?php echo ($app['status'] ?? '') == 'reviewed' ? 'selected' : ''; ?>>Reviewed</option>
+                                    <option value="accepted" <?php echo ($app['status'] ?? '') == 'accepted' ? 'selected' : ''; ?>>Accepted</option>
+                                    <option value="rejected" <?php echo ($app['status'] ?? '') == 'rejected' ? 'selected' : ''; ?>>Rejected</option>
+                                </select>
+                                <input type="hidden" name="update_status" value="1">
+                            </form>
 
-                <form method="post" class="status-form" style="margin:0;">
-                    <input type="hidden" name="app_id" value="<?php echo $app['app_id']; ?>">
-                    <input type="hidden" name="redirect_qs" value="<?php echo htmlspecialchars($_SERVER['QUERY_STRING']); ?>">
-                    <select name="status" class="form-control btn-sm" onchange="this.form.submit()">
-                        <option value="pending" <?php echo ($app['status'] ?? '') == 'pending' ? 'selected' : ''; ?>>Pending</option>
-                        <option value="reviewed" <?php echo ($app['status'] ?? '') == 'reviewed' ? 'selected' : ''; ?>>Reviewed</option>
-                        <option value="accepted" <?php echo ($app['status'] ?? '') == 'accepted' ? 'selected' : ''; ?>>Accepted</option>
-                        <option value="rejected" <?php echo ($app['status'] ?? '') == 'rejected' ? 'selected' : ''; ?>>Rejected</option>
-                    </select>
-                    <input type="hidden" name="update_status" value="1">
-                </form>
-
-                <?php if (($app['status'] ?? '') == 'reviewed' || ($app['status'] ?? '') == 'accepted') : ?>
-                <a href="interviews.php?app_id=<?php echo $app['app_id']; ?>" class="btn btn-primary btn-sm">
-                    <i class="fa-solid fa-calendar-plus"></i> Schedule Interview
-                </a>
-                <?php endif; ?>
+                            <?php if (($app['status'] ?? '') == 'reviewed' || ($app['status'] ?? '') == 'accepted') : ?>
+                            <a href="interviews.php?app_id=<?php echo $app['app_id']; ?>" class="btn btn-primary btn-sm">
+                                <i class="fa-solid fa-calendar-plus"></i> Schedule Interview
+                            </a>
+                            <?php endif; ?>
             </div>
         </div>
         <?php endwhile; ?>
