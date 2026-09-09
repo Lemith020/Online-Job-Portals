@@ -670,26 +670,75 @@ function subscribe_to_plan($conn, $user_id, $plan_id) {
     return mysqli_stmt_execute($insert);
 }
 
-function get_applications($conn, $seeker_id, $status_filter = '') {
-    $sql = "SELECT a.app_id, a.apply_date, a.status, a.experience,
-                   j.title, c.company_name, cv.file_path
+function get_applications($conn, $seeker_id, $status = '') {
+    if (!$conn || empty($seeker_id)) return [];
+
+    $seeker_id = (int)$seeker_id;
+    $sql = "SELECT a.app_id, a.apply_date, a.status, a.cv_id, a.experience,
+                   j.job_id, j.title, c.company_name, cv.file_path
             FROM applications a
             JOIN jobs j ON a.job_id = j.job_id
-            JOIN company c ON j.company_id = c.company_id
-            JOIN cvs cv ON a.cv_id = cv.cv_id
-            WHERE a.seeker_id = ?" . ($status_filter ? " AND a.status = ?" : "") . "
-            ORDER BY a.apply_date DESC";
-    $stmt = mysqli_prepare($conn, $sql);
-    if ($status_filter) {
-        mysqli_stmt_bind_param($stmt, "is", $seeker_id, $status_filter);
-    } else {
-        mysqli_stmt_bind_param($stmt, "i", $seeker_id);
+            LEFT JOIN company c ON j.company_id = c.company_id
+            LEFT JOIN cvs cv ON a.cv_id = cv.cv_id
+            WHERE a.seeker_id = ?";
+
+    $params = [$seeker_id];
+    $types = "i";
+
+    if (!empty($status) && $status !== 'all') {
+        $sql .= " AND a.status = ?";
+        $params[] = $status;
+        $types .= "s";
     }
-    mysqli_stmt_execute($stmt);
-    $result = mysqli_stmt_get_result($stmt);
-    $rows = [];
-    while ($row = mysqli_fetch_assoc($result)) $rows[] = $row;
-    return $rows;
+
+    $sql .= " ORDER BY a.app_id DESC";
+
+    $stmt = mysqli_prepare($conn, $sql);
+    if ($stmt) {
+        mysqli_stmt_bind_param($stmt, $types, ...$params);
+        mysqli_stmt_execute($stmt);
+        $res = mysqli_stmt_get_result($stmt);
+        $rows = [];
+        if ($res) {
+            while ($row = mysqli_fetch_assoc($res)) {
+                $rows[] = $row;
+            }
+        }
+        return $rows;
+    }
+
+    return [];
+}
+
+/**
+ * Get Application details along with Job, Company & CV path for my-cv.php
+ */
+function get_application_cv_details($conn, $app_id, $seeker_id) {
+    if (!$conn || empty($app_id) || empty($seeker_id)) return null;
+
+    $app_id    = (int)$app_id;
+    $seeker_id = (int)$seeker_id;
+
+    $sql = "SELECT a.app_id, a.apply_date, a.status, a.experience,
+                   j.title AS job_title, 
+                   c.company_name, 
+                   cv.cv_id, cv.file_path, cv.uploaded_at
+            FROM applications a
+            JOIN jobs j ON a.job_id = j.job_id
+            LEFT JOIN company c ON j.company_id = c.company_id
+            LEFT JOIN cvs cv ON a.cv_id = cv.cv_id
+            WHERE a.app_id = ? AND a.seeker_id = ?";
+
+    $stmt = mysqli_prepare($conn, $sql);
+    if ($stmt) {
+        mysqli_stmt_bind_param($stmt, "ii", $app_id, $seeker_id);
+        mysqli_stmt_execute($stmt);
+        $res = mysqli_stmt_get_result($stmt);
+        if ($res && $row = mysqli_fetch_assoc($res)) {
+            return $row;
+        }
+    }
+    return null;
 }
 
 function withdraw_application($conn, $app_id, $seeker_id) {
@@ -840,22 +889,25 @@ function get_seeker_id($conn, $user_id) {
 
 // Get Seeker CVs list for my-cv.php
 function get_seeker_cvs($conn, $seeker_id) {
-    $cvs = [];
-    if ($conn) {
-        $sql = "SELECT * FROM cvs WHERE seeker_id = ? ORDER BY id DESC";
-        $stmt = @mysqli_prepare($conn, $sql);
-        if ($stmt) {
-            mysqli_stmt_bind_param($stmt, "i", $seeker_id);
-            mysqli_stmt_execute($stmt);
-            $res = mysqli_stmt_get_result($stmt);
-            if ($res) {
-                while ($row = mysqli_fetch_assoc($res)) {
-                    $cvs[] = $row;
-                }
+    if (!$conn || empty($seeker_id)) return [];
+
+    $seeker_id = (int)$seeker_id;
+    $sql = "SELECT * FROM cvs WHERE seeker_id = ? ORDER BY cv_id DESC";
+    $stmt = mysqli_prepare($conn, $sql);
+
+    if ($stmt) {
+        mysqli_stmt_bind_param($stmt, "i", $seeker_id);
+        mysqli_stmt_execute($stmt);
+        $res = mysqli_stmt_get_result($stmt);
+        $rows = [];
+        if ($res) {
+            while ($row = mysqli_fetch_assoc($res)) {
+                $rows[] = $row;
             }
         }
+        return $rows;
     }
-    return $cvs;
+    return [];
 }
 
 // Insert uploaded CV path into the database
@@ -865,10 +917,36 @@ function insert_cv($conn, $seeker_id, $file_path) {
         $stmt = @mysqli_prepare($conn, $sql);
         if ($stmt) {
             mysqli_stmt_bind_param($stmt, "is", $seeker_id, $file_path);
-            return mysqli_stmt_execute($stmt);
+            if (mysqli_stmt_execute($stmt)) {
+                // Return newly inserted cv_id
+                return mysqli_insert_id($conn);
+            }
         }
     }
     return false;
+}
+
+/**
+ * Insert job application details into 'applications' table
+ */
+/**
+ * Insert job application details into 'applications' table
+ */
+function insert_application($conn, $seeker_id, $job_id, $cv_id, $experience = '') {
+    if (!$conn || empty($seeker_id) || empty($job_id) || empty($cv_id)) {
+        return false;
+    }
+
+    $seeker_id  = (int)$seeker_id;
+    $job_id     = (int)$job_id;
+    $cv_id      = (int)$cv_id;
+    $experience = mysqli_real_escape_string($conn, trim($experience));
+
+    // real column names: seeker_id, job_id, cv_id, apply_date, status, experience
+    $sql = "INSERT INTO applications (seeker_id, job_id, cv_id, apply_date, status, experience) 
+            VALUES ($seeker_id, $job_id, $cv_id, CURDATE(), 'pending', '$experience')";
+
+    return mysqli_query($conn, $sql);
 }
 
 // 2. Clean / XSS Helper (if clean() is missing)
@@ -1081,6 +1159,39 @@ function get_jobs_count($conn, $search = '', $category = '') {
         }
     }
     return 0;
+}
+
+/**
+ * Get single job details by job_id (For Job Details & Apply Page)
+ */
+function get_job_by_id($conn, $job_id) {
+    if (!$conn || empty($job_id)) return null;
+
+    $job_id = (int)$job_id;
+
+    $sql = "SELECT j.*, 
+                   c.company_name, 
+                   c.location AS company_location, 
+                   c.industry_type, 
+                   cat.category_name 
+            FROM jobs j 
+            LEFT JOIN company c ON j.company_id = c.company_id 
+            LEFT JOIN categories cat ON j.category_id = cat.category_id 
+            WHERE j.job_id = ?";
+
+    $stmt = mysqli_prepare($conn, $sql);
+    
+    if ($stmt) {
+        mysqli_stmt_bind_param($stmt, "i", $job_id);
+        mysqli_stmt_execute($stmt);
+        $res = mysqli_stmt_get_result($stmt);
+        
+        if ($res && $row = mysqli_fetch_assoc($res)) {
+            return $row; // Job Details Record එක Return කරයි
+        }
+    }
+
+    return null;
 }
 
 // 10.2. Get Jobs List for browse-jobs.php (with Array-to-string fix)

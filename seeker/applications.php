@@ -17,6 +17,7 @@ $status_filter = $_GET['status'] ?? '';
 $applications = get_applications($conn, $seeker_id, $status_filter);
 
 $page_title = "My Applications";
+
 $page_css = "../assets/css/seeker_page_css/applications.css";
 $page_js = "../assets/js/seeker_page_js/applications.js";
 require_once '../includes/seeker-header.php';
@@ -45,16 +46,35 @@ require_once '../includes/seeker-sidebar.php';
 <div class="card">
     <table>
         <thead>
-            <tr><th>Job Title</th><th>Apply Date</th><th>Status</th><th></th></tr>
+            <tr>
+                <th>Job Title</th>
+                <th>Apply Date</th>
+                <th>Status</th>
+                <th></th>
+            </tr>
         </thead>
         <tbody>
         <?php if ($applications): ?>
             <?php foreach ($applications as $app): ?>
-                <tr class="app-row" onclick="openModal(<?= $app['app_id'] ?>)">
-                    <td><?= clean($app['title']) ?> <br><small class="job-company"><?= clean($app['company_name']) ?></small></td>
+                <tr class="app-row" style="cursor: pointer;" onclick="window.location.href='my-cv.php?app_id=<?= $app['app_id'] ?>'">
+                    <td>
+                        <?= clean($app['title']) ?> <br>
+                        <small class="job-company"><?= clean($app['company_name'] ?? 'N/A') ?></small>
+                    </td>
                     <td><?= formatDate($app['apply_date']) ?></td>
-                    <td><span class="badge <?= status_badge_class($app['status']) ?>"><?= clean(ucfirst($app['status'])) ?></span></td>
-                    <td><button type="button" class="btn btn-outline">View</button></td>
+                    <td>
+                        <span class="badge <?= status_badge_class($app['status']) ?>">
+                            <?= clean(ucfirst($app['status'])) ?>
+                        </span>
+                    </td>
+                    <td>
+                
+                        <a href="my-cv.php?app_id=<?= $app['app_id'] ?>" 
+                           class="btn btn-outline" 
+                           onclick="event.stopPropagation();">
+                            View
+                        </a>
+                    </td>
                 </tr>
             <?php endforeach; ?>
         <?php else: ?>
