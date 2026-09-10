@@ -434,12 +434,14 @@ function get_all_categories_admin() {
     global $conn;
     $categories = [];
 
-    $result = mysqli_query($conn, "SELECT * FROM categories ORDER BY category_name ASC");
-    if (!$result) {
-        // Fallback if column is 'name'
-        $result = mysqli_query($conn, "SELECT * FROM categories ORDER BY id ASC");
-    }
+    $sql = "SELECT c.category_id, c.category_name, 
+            COUNT(j.job_id) AS job_count
+            FROM categories c
+            LEFT JOIN jobs j ON c.category_id = j.category_id
+            GROUP BY c.category_id, c.category_name
+            ORDER BY c.category_name ASC";
 
+    $result = mysqli_query($conn, $sql);
     if ($result) {
         while ($row = mysqli_fetch_assoc($result)) {
             $categories[] = $row;
@@ -449,32 +451,32 @@ function get_all_categories_admin() {
     return $categories;
 }
 
-function save_category($name, $icon = 'briefcase', $id = null) {
+
+function save_category($name, $id = null) {
     global $conn;
-    if ($conn) {
-        if ($id) {
-            $stmt = mysqli_prepare($conn, "UPDATE categories SET name = ?, icon = ? WHERE id = ?");
-            mysqli_stmt_bind_param($stmt, "ssi", $name, $icon, $id);
-            return mysqli_stmt_execute($stmt);
-        } else {
-            $stmt = mysqli_prepare($conn, "INSERT INTO categories (name, icon) VALUES (?, ?)");
-            mysqli_stmt_bind_param($stmt, "ss", $name, $icon);
-            return mysqli_stmt_execute($stmt);
-        }
+    $name_clean = mysqli_real_escape_string($conn, $name);
+
+    if ($id) {
+        $cat_id = (int)$id;
+        $sql = "UPDATE categories SET category_name = '$name_clean' WHERE category_id = $cat_id";
+    } else {
+        $sql = "INSERT INTO categories (category_name) VALUES ('$name_clean')";
     }
-    return true;
+
+    return mysqli_query($conn, $sql);
 }
 
 function delete_category($id) {
     global $conn;
-    if ($conn) {
-        $stmt = mysqli_prepare($conn, "DELETE FROM categories WHERE id = ?");
-        if ($stmt) {
-            mysqli_stmt_bind_param($stmt, "i", $id);
-            return mysqli_stmt_execute($stmt);
-        }
-    }
-    return true;
+    $cat_id = (int)$id;
+
+    if ($cat_id <= 0) return false;
+
+    // Optional: Reset jobs in this category
+    mysqli_query($conn, "UPDATE jobs SET category_id = NULL WHERE category_id = $cat_id");
+
+    $sql = "DELETE FROM categories WHERE category_id = $cat_id";
+    return mysqli_query($conn, $sql);
 }
 
 // -------------------------------------------------------------
@@ -547,57 +549,75 @@ function delete_review_admin($id) {
 // -------------------------------------------------------------
 function get_all_subscription_plans_admin() {
     global $conn;
-    if ($conn) {
-        $res = @mysqli_query($conn, "SELECT * FROM subscription_plans ORDER BY price ASC");
-        if ($res && mysqli_num_rows($res) > 0) {
-            $plans = [];
-            while ($row = mysqli_fetch_assoc($res)) $plans[] = $row;
-            return $plans;
+    $plans = [];
+
+    $result = mysqli_query($conn, "SELECT * FROM subscription_plans ORDER BY plan_id ASC");
+    if ($result) {
+        while ($row = mysqli_fetch_assoc($result)) {
+            $plans[] = $row;
         }
     }
 
-    return [
-        ['plan_id' => 1, 'name' => 'Starter / Free', 'price' => 0.00, 'duration_days' => 30, 'max_jobs' => 3, 'features' => 'Standard job postings, Basic candidate search, 3 Active job listings', 'is_active' => 1],
-        ['plan_id' => 2, 'name' => 'Professional Employer', 'price' => 15000.00, 'duration_days' => 30, 'max_jobs' => 15, 'features' => 'Featured job tag, Unlimited applicant CV downloads, Priority tech support', 'is_active' => 1],
-        ['plan_id' => 3, 'name' => 'Enterprise Unlimited', 'price' => 45000.00, 'duration_days' => 90, 'max_jobs' => 100, 'features' => 'Dedicated account manager, Automated candidate shortlisting, Custom branding', 'is_active' => 1]
-    ];
+    return $plans;
 }
 
-function get_user_subscriptions_admin($plan_filter = '', $search = '') {
+function get_user_subscriptions_admin() {
     global $conn;
-    if ($conn) {
-        $sql = "SELECT us.sub_id AS id, u.name AS user_name, u.email, sp.name AS plan_name, sp.price, us.start_date, us.end_date, us.is_active
-                FROM user_subscriptions us
-                JOIN users u ON us.user_id = u.id
-                JOIN subscription_plans sp ON us.plan_id = sp.plan_id
-                ORDER BY us.sub_id DESC";
-        $res = @mysqli_query($conn, $sql);
-        if ($res && mysqli_num_rows($res) > 0) {
-            $subs = [];
-            while ($row = mysqli_fetch_assoc($res)) $subs[] = $row;
-            return $subs;
+    $subscriptions = [];
+
+    $sql = "SELECT s.sub_id, s.user_id, s.plan_id, s.start_date, s.end_date, s.is_active,
+            p.plan_name, p.price,
+            u.email, u.first_name, u.last_name,
+            c.company_name
+            FROM user_subscriptions s
+            LEFT JOIN subscription_plans p ON s.plan_id = p.plan_id
+            LEFT JOIN users u ON s.user_id = u.user_id
+            LEFT JOIN company c ON u.user_id = c.user_id
+            ORDER BY s.sub_id DESC";
+
+    $result = mysqli_query($conn, $sql);
+
+    if ($result) {
+        while ($row = mysqli_fetch_assoc($result)) {
+            // Determine display name
+            $subscriber_name = $row['company_name'] ?: trim(($row['first_name'] ?? '') . ' ' . ($row['last_name'] ?? ''));
+            if (empty($subscriber_name) && !empty($row['email'])) {
+                $subscriber_name = ucfirst(explode('@', $row['email'])[0]);
+            }
+
+            $row['subscriber_name'] = !empty($subscriber_name) ? $subscriber_name : 'User #' . $row['user_id'];
+            $subscriptions[] = $row;
         }
     }
 
-    return [
-        ['id' => 101, 'user_name' => 'Virtusa (Pvt) Ltd', 'email' => 'careers@virtusa.com', 'plan_name' => 'Enterprise Unlimited', 'price' => 45000.00, 'start_date' => '2026-02-01', 'end_date' => '2026-05-01', 'is_active' => 1],
-        ['id' => 102, 'user_name' => 'Dialog Axiata PLC', 'email' => 'jobs@dialog.lk', 'plan_name' => 'Enterprise Unlimited', 'price' => 45000.00, 'start_date' => '2026-03-01', 'end_date' => '2026-06-01', 'is_active' => 1],
-        ['id' => 103, 'user_name' => 'WSO2 Lanka', 'email' => 'hr@wso2.com', 'plan_name' => 'Professional Employer', 'price' => 15000.00, 'start_date' => '2026-03-15', 'end_date' => '2026-04-15', 'is_active' => 1],
-        ['id' => 104, 'user_name' => 'Apex Digital Media', 'email' => 'contact@apexdigital.lk', 'plan_name' => 'Starter / Free', 'price' => 0.00, 'start_date' => '2026-03-20', 'end_date' => '2026-04-20', 'is_active' => 1],
-        ['id' => 105, 'user_name' => 'FastTrack Logistics', 'email' => 'support@fasttrack.lk', 'plan_name' => 'Professional Employer', 'price' => 15000.00, 'start_date' => '2026-01-10', 'end_date' => '2026-02-10', 'is_active' => 0]
-    ];
+    return $subscriptions;
 }
 
 function toggle_user_subscription_status($sub_id, $is_active) {
     global $conn;
-    if ($conn) {
-        $stmt = mysqli_prepare($conn, "UPDATE user_subscriptions SET is_active = ? WHERE sub_id = ?");
-        if ($stmt) {
-            mysqli_stmt_bind_param($stmt, "ii", $is_active, $sub_id);
-            return mysqli_stmt_execute($stmt);
-        }
+    $sid = (int)$sub_id;
+    $active_val = (int)$is_active;
+
+    if ($sid <= 0) return false;
+
+    $query = "UPDATE user_subscriptions SET is_active = $active_val WHERE sub_id = $sid";
+    return mysqli_query($conn, $query);
+}
+
+function save_subscription_plan($plan_name, $price, $duration_days, $plan_id = null) {
+    global $conn;
+    $pname = mysqli_real_escape_string($conn, $plan_name);
+    $price_val = (float)$price;
+    $days = (int)$duration_days;
+
+    if ($plan_id) {
+        $pid = (int)$plan_id;
+        $sql = "UPDATE subscription_plans SET plan_name = '$pname', price = $price_val, duration_days = $days WHERE plan_id = $pid";
+    } else {
+        $sql = "INSERT INTO subscription_plans (plan_name, duration_days, price) VALUES ('$pname', $days, $price_val)";
     }
-    return true;
+
+    return mysqli_query($conn, $sql);
 }
 
 // -------------------------------------------------------------
