@@ -7,6 +7,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
 require_once __DIR__ . '/../includes/functions.php';
 
 $page_title = 'System Settings';
+$page_css = BASE_URL . '/assets/css/admin_page.css';
 
 // Handle POST save
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

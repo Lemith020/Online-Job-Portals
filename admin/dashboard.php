@@ -7,6 +7,8 @@ require_once __DIR__ . '/../includes/auth_check.php';
 require_once __DIR__ . '/../includes/functions.php';
 
 $page_title = 'Dashboard Overview';
+
+$page_css = BASE_URL . '/assets/css/admin_page.css'; 
 $metrics = get_admin_metrics();
 $activities = get_recent_activities(6);
 
@@ -95,7 +97,7 @@ require_once __DIR__ . '/../includes/navbar.php';
   </div>
 
   <!-- 6. Flagged Reviews -->
-  <div class="metric-card" onclick="location.href='reviews.php?status=Flagged'">
+<div class="metric-card" onclick="location.href='reviews.php?status=Flagged'">
     <div class="metric-info">
       <span class="metric-title">Flagged Reviews</span>
       <span class="metric-value text-danger"><?php echo number_format($metrics['flagged_reviews']); ?></span>

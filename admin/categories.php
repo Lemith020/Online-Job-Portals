@@ -7,6 +7,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
 require_once __DIR__ . '/../includes/functions.php';
 
 $page_title = 'Category Management';
+$page_css = BASE_URL . '/assets/css/admin_page.css';
 
 // Handle POST actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
