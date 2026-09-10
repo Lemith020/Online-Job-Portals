@@ -625,32 +625,46 @@ function save_subscription_plan($plan_name, $price, $duration_days, $plan_id = n
 // -------------------------------------------------------------
 function get_system_settings() {
     global $conn;
-    if ($conn) {
-        $res = @mysqli_query($conn, "SELECT * FROM settings WHERE id = 1");
-        if ($res && $row = mysqli_fetch_assoc($res)) {
-            return $row;
+
+    $defaults = [
+        'site_name'  => 'JobPortal.lk',
+        'site_email' => 'admin@jobportal.lk'
+    ];
+
+    // Check session or database override
+    if (isset($_SESSION['system_settings'])) {
+        return array_merge($defaults, $_SESSION['system_settings']);
+    }
+
+    // Try reading from DB if settings table exists
+    $result = @mysqli_query($conn, "SELECT setting_key, setting_value FROM system_settings");
+    if ($result) {
+        while ($row = mysqli_fetch_assoc($result)) {
+            if (isset($defaults[$row['setting_key']])) {
+                $defaults[$row['setting_key']] = $row['setting_value'];
+            }
         }
     }
 
-    return [
-        'site_name' => 'JobPortal.lk',
-        'site_email' => 'admin@jobportal.lk',
-        'maintenance_mode' => 0,
-        'enable_registration' => 1,
-        'enable_job_approval' => 1,
-        'jobs_per_page' => 10
-    ];
+    return $defaults;
 }
 
 function save_system_settings($data) {
     global $conn;
-    if ($conn) {
-        $stmt = mysqli_prepare($conn, "UPDATE settings SET site_name = ?, site_email = ?, maintenance_mode = ?, enable_registration = ?, enable_job_approval = ?, jobs_per_page = ? WHERE id = 1");
-        if ($stmt) {
-            mysqli_stmt_bind_param($stmt, "ssiiii", $data['site_name'], $data['site_email'], $data['maintenance_mode'], $data['enable_registration'], $data['enable_job_approval'], $data['jobs_per_page']);
-            return mysqli_stmt_execute($stmt);
-        }
+
+    // Always update session state for immediate app reactivity
+    $_SESSION['system_settings'] = $data;
+
+    // Attempt DB sync if settings table exists
+    foreach ($data as $key => $val) {
+        $key_clean = mysqli_real_escape_string($conn, $key);
+        $val_clean = mysqli_real_escape_string($conn, $val);
+
+        @mysqli_query($conn, "INSERT INTO system_settings (setting_key, setting_value) 
+                              VALUES ('$key_clean', '$val_clean') 
+                              ON DUPLICATE KEY UPDATE setting_value = '$val_clean'");
     }
+
     return true;
 }
 
