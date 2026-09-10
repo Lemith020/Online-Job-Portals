@@ -26,10 +26,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             global $conn;
             $hashed = password_hash($password, PASSWORD_DEFAULT);
             if ($conn) {
-                $stmt = mysqli_prepare($conn, "INSERT INTO users (name, email, password, role, phone, status) VALUES (?, ?, ?, ?, ?, 'Active')");
+                $stmt = mysqli_prepare($conn, "INSERT INTO users (email, password, phone, status) VALUES (?, ?, ?, 'Active')");
                 if ($stmt) {
-                    mysqli_stmt_bind_param($stmt, "sssss", $name, $email, $hashed, $role, $phone);
+                    mysqli_stmt_bind_param($stmt, "sss", $email, $hashed, $phone);
                     mysqli_stmt_execute($stmt);
+                    $new_user_id = mysqli_insert_id($conn);
+                    mysqli_stmt_close($stmt);
+
+                    // Insert into child tables depending on role
+                    if ($role === 'company' && $new_user_id) {
+                        $stmt_c = mysqli_prepare($conn, "INSERT INTO company (user_id, company_name, location) VALUES (?, ?, 'N/A')");
+                        if ($stmt_c) {
+                            mysqli_stmt_bind_param($stmt_c, "is", $new_user_id, $name);
+                            mysqli_stmt_execute($stmt_c);
+                            mysqli_stmt_close($stmt_c);
+                        }
+                    } elseif ($role === 'seeker' && $new_user_id) {
+                        $stmt_s = mysqli_prepare($conn, "INSERT INTO job_seekers (user_id, phone, status) VALUES (?, ?, 'not_hired')");
+                        if ($stmt_s) {
+                            mysqli_stmt_bind_param($stmt_s, "is", $new_user_id, $phone);
+                            mysqli_stmt_execute($stmt_s);
+                            mysqli_stmt_close($stmt_s);
+                        }
+                    }
                 }
             }
             add_activity("Created new user account: $name ($email) as " . ucfirst($role), "user");
@@ -98,7 +117,7 @@ require_once __DIR__ . '/../includes/navbar.php';
         <label>Search Users:</label>
         <div class="input-with-icon">
           <i class="fa-solid fa-magnifying-glass"></i>
-          <input type="text" name="search" class="form-input" placeholder="Search by name, email, phone..." value="<?php echo htmlspecialchars($search); ?>">
+          <input type="text" name="search" class="form-input" placeholder="Search by email, phone, company..." value="<?php echo htmlspecialchars($search); ?>">
         </div>
       </div>
 
@@ -142,6 +161,7 @@ require_once __DIR__ . '/../includes/navbar.php';
             </tr>
           <?php else: ?>
             <?php foreach ($users as $u): ?>
+              <?php $target_user_id = $u['user_id'] ?? $u['id']; ?>
               <tr>
                 <td>
                   <div class="user-row-info">
@@ -179,7 +199,7 @@ require_once __DIR__ . '/../includes/navbar.php';
                     <?php if ($u['status'] === 'Active'): ?>
                       <form method="POST" action="users.php" style="display:inline;" onsubmit="return confirm('Suspend this user account?');">
                         <input type="hidden" name="action" value="toggle_status">
-                        <input type="hidden" name="id" value="<?php echo $u['id']; ?>">
+                        <input type="hidden" name="id" value="<?php echo $target_user_id; ?>">
                         <input type="hidden" name="status" value="Suspended">
                         <button type="submit" class="btn-icon text-amber" title="Suspend User">
                           <i class="fa-solid fa-ban"></i>
@@ -188,7 +208,7 @@ require_once __DIR__ . '/../includes/navbar.php';
                     <?php else: ?>
                       <form method="POST" action="users.php" style="display:inline;">
                         <input type="hidden" name="action" value="toggle_status">
-                        <input type="hidden" name="id" value="<?php echo $u['id']; ?>">
+                        <input type="hidden" name="id" value="<?php echo $target_user_id; ?>">
                         <input type="hidden" name="status" value="Active">
                         <button type="submit" class="btn-icon text-emerald" title="Activate User">
                           <i class="fa-solid fa-circle-check"></i>
@@ -196,10 +216,10 @@ require_once __DIR__ . '/../includes/navbar.php';
                       </form>
                     <?php endif; ?>
 
-                    <?php if ($u['role'] !== 'admin' || $u['id'] != ($_SESSION['user']['id'] ?? 1)): ?>
+                    <?php if ($u['role'] !== 'admin' || $target_user_id != ($_SESSION['user']['id'] ?? $_SESSION['user']['user_id'] ?? 1)): ?>
                       <form method="POST" action="users.php" style="display:inline;" onsubmit="return confirm('Permanently delete this user?');">
                         <input type="hidden" name="action" value="delete">
-                        <input type="hidden" name="id" value="<?php echo $u['id']; ?>">
+                        <input type="hidden" name="id" value="<?php echo $target_user_id; ?>">
                         <button type="submit" class="btn-icon text-danger" title="Delete User">
                           <i class="fa-regular fa-trash-can"></i>
                         </button>
@@ -222,8 +242,8 @@ function openAddUserModal() {
     <form method="POST" action="users.php">
       <input type="hidden" name="action" value="create">
       <div class="form-group mb-3">
-        <label class="form-label">Full Name <span class="text-danger">*</span></label>
-        <input type="text" name="name" class="form-input" required placeholder="e.g. Kasun Silva">
+        <label class="form-label">Full / Company Name <span class="text-danger">*</span></label>
+        <input type="text" name="name" class="form-input" required placeholder="e.g. Kasun Silva or Virtusa">
       </div>
       <div class="form-group mb-3">
         <label class="form-label">Email Address <span class="text-danger">*</span></label>

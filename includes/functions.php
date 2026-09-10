@@ -56,179 +56,208 @@ function time_ago($datetime) {
 // Activity Logging
 function add_activity($action, $type = 'general') {
     global $conn;
-    if (session_status() === PHP_SESSION_NONE) session_start();
-    $admin_id = $_SESSION['user']['id'] ?? 1;
-
-    if ($conn) {
-        $stmt = @mysqli_prepare($conn, "INSERT INTO admin_activity_log (admin_id, action, details, created_at) VALUES (?, ?, ?, NOW())");
-        if ($stmt) {
-            mysqli_stmt_bind_param($stmt, "iss", $admin_id, $action, $type);
-            mysqli_stmt_execute($stmt);
-        }
+    $stmt = mysqli_prepare($conn, "INSERT INTO activity_logs (action, type, created_at) VALUES (?, ?, NOW())");
+    if ($stmt) {
+        mysqli_stmt_bind_param($stmt, "ss", $action, $type);
+        mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
     }
-
-    if (!isset($_SESSION['activity_logs'])) {
-        $_SESSION['activity_logs'] = [];
-    }
-    array_unshift($_SESSION['activity_logs'], [
-        'id' => uniqid(),
-        'action' => $action,
-        'type' => $type,
-        'created_at' => date('Y-m-d H:i:s')
-    ]);
-    $_SESSION['activity_logs'] = array_slice($_SESSION['activity_logs'], 0, 20);
 }
 
 function get_recent_activities($limit = 6) {
     global $conn;
-    if ($conn) {
-        $sql = "SELECT log_id AS id, action, details AS type, created_at FROM admin_activity_log ORDER BY log_id DESC LIMIT " . intval($limit);
-        $res = @mysqli_query($conn, $sql);
-        if ($res && mysqli_num_rows($res) > 0) {
-            $rows = [];
-            while ($row = mysqli_fetch_assoc($res)) {
-                $rows[] = $row;
-            }
-            return $rows;
+    $activities = [];
+
+    // Audit logs / activity_log table එකෙන් නවතම Records ගන්නා SQL Query එක
+    $query = "SELECT action, created_at FROM activity_logs ORDER BY id DESC LIMIT " . (int)$limit;
+    $res = mysqli_query($conn, $query);
+
+    if ($res && mysqli_num_rows($res) > 0) {
+        while ($row = mysqli_fetch_assoc($res)) {
+            $activities[] = $row;
         }
+    } else {
+        // Table එකේ records නැත්නම් හෝ Table එකක් නැත්නම් Default Placeholder Data
+        $activities = [
+            ['action' => 'New employer account pending verification', 'created_at' => date('Y-m-d H:i:s', strtotime('-10 mins'))],
+            ['action' => 'Job posting "Mobile App Developer" submitted for approval', 'created_at' => date('Y-m-d H:i:s', strtotime('-1 hour'))],
+            ['action' => 'System metrics database backup completed successfully', 'created_at' => date('Y-m-d H:i:s', strtotime('-3 hours'))]
+        ];
     }
 
-    if (!empty($_SESSION['activity_logs'])) {
-        return array_slice($_SESSION['activity_logs'], 0, $limit);
-    }
-
-    return [
-        ['id' => 1, 'action' => 'Job approved: Senior Software Engineer at Dialog Axiata', 'type' => 'job', 'created_at' => date('Y-m-d H:i:s', time() - 300)],
-        ['id' => 2, 'action' => 'New Company verified: Virtusa Pvt Ltd', 'type' => 'company', 'created_at' => date('Y-m-d H:i:s', time() - 1800)],
-        ['id' => 3, 'action' => 'User suspended: spammer_99@mail.com', 'type' => 'user', 'created_at' => date('Y-m-d H:i:s', time() - 4200)],
-        ['id' => 4, 'action' => 'Review flagged: Flagged abusive comment on WSO2', 'type' => 'review', 'created_at' => date('Y-m-d H:i:s', time() - 14400)],
-        ['id' => 5, 'action' => 'Subscription upgraded: Enterprise Plan for Sysco LABS', 'type' => 'subscription', 'created_at' => date('Y-m-d H:i:s', time() - 86400)],
-        ['id' => 6, 'action' => 'Category updated: Artificial Intelligence & Data Science', 'type' => 'category', 'created_at' => date('Y-m-d H:i:s', time() - 98000)],
-    ];
+    return $activities;
 }
 
 // Admin KPI Metrics
 function get_admin_metrics() {
     global $conn;
+
     $metrics = [
-        'total_users' => 1248,
-        'total_job_seekers' => 895,
-        'total_companies' => 84,
-        'total_jobs' => 412,
-        'pending_jobs' => 18,
-        'flagged_reviews' => 7,
-        'active_subscriptions' => 52
+        'total_users'          => 0,
+        'total_job_seekers'    => 0,
+        'total_companies'      => 0,
+        'total_jobs'           => 0,
+        'pending_jobs'         => 0,
+        'flagged_reviews'      => 0,
+        'active_subscriptions' => 0
     ];
 
-    if ($conn) {
-        $u_res = @mysqli_query($conn, "SELECT COUNT(*) AS cnt FROM users");
-        if ($u_res && $row = mysqli_fetch_assoc($u_res)) $metrics['total_users'] = (int)$row['cnt'];
+    try {
+        // 1. Total Users
+        $res = mysqli_query($conn, "SELECT COUNT(*) as cnt FROM users");
+        if ($res) { $metrics['total_users'] = mysqli_fetch_assoc($res)['cnt'] ?? 0; }
 
-        $s_res = @mysqli_query($conn, "SELECT COUNT(*) AS cnt FROM job_seekers");
-        if ($s_res && $row = mysqli_fetch_assoc($s_res)) $metrics['total_job_seekers'] = (int)$row['cnt'];
+        // 2. Job Seekers (Table Name: job_seekers)
+        $res = mysqli_query($conn, "SELECT COUNT(*) as cnt FROM job_seekers");
+        if ($res) { $metrics['total_job_seekers'] = mysqli_fetch_assoc($res)['cnt'] ?? 0; }
 
-        $c_res = @mysqli_query($conn, "SELECT COUNT(*) AS cnt FROM companies");
-        if ($c_res && $row = mysqli_fetch_assoc($c_res)) $metrics['total_companies'] = (int)$row['cnt'];
+        // 3. Companies (Table Name: company)
+        $res = mysqli_query($conn, "SELECT COUNT(*) as cnt FROM company");
+        if ($res) { $metrics['total_companies'] = mysqli_fetch_assoc($res)['cnt'] ?? 0; }
 
-        $j_res = @mysqli_query($conn, "SELECT COUNT(*) AS cnt FROM jobs");
-        if ($j_res && $row = mysqli_fetch_assoc($j_res)) $metrics['total_jobs'] = (int)$row['cnt'];
+        // 4. Active Jobs
+        $res = mysqli_query($conn, "SELECT COUNT(*) as cnt FROM jobs WHERE status = 'active' OR status = 'published' OR status = 'Approved'");
+        if ($res) { $metrics['total_jobs'] = mysqli_fetch_assoc($res)['cnt'] ?? 0; }
 
-        $pj_res = @mysqli_query($conn, "SELECT COUNT(*) AS cnt FROM jobs WHERE status = 'Pending Approval'");
-        if ($pj_res && $row = mysqli_fetch_assoc($pj_res)) $metrics['pending_jobs'] = (int)$row['cnt'];
+        // 5. Pending Jobs
+        $res = mysqli_query($conn, "SELECT COUNT(*) as cnt FROM jobs WHERE status = 'pending' OR status = 'Pending Approval'");
+        if ($res) { $metrics['pending_jobs'] = mysqli_fetch_assoc($res)['cnt'] ?? 0; }
 
-        $r_res = @mysqli_query($conn, "SELECT COUNT(*) AS cnt FROM reviews WHERE status = 'Flagged' OR is_flagged = 1");
-        if ($r_res && $row = mysqli_fetch_assoc($r_res)) $metrics['flagged_reviews'] = (int)$row['cnt'];
+        // 6. Flagged Reviews
+        $res = mysqli_query($conn, "SELECT COUNT(*) as cnt FROM reviews WHERE status = 'flagged' OR is_flagged = 1");
+        if ($res) { $metrics['flagged_reviews'] = mysqli_fetch_assoc($res)['cnt'] ?? 0; }
 
-        $sub_res = @mysqli_query($conn, "SELECT COUNT(*) AS cnt FROM user_subscriptions WHERE is_active = 1");
-        if ($sub_res && $row = mysqli_fetch_assoc($sub_res)) $metrics['active_subscriptions'] = (int)$row['cnt'];
+        // 7. Active Subscriptions
+        $res = mysqli_query($conn, "SELECT COUNT(*) as cnt FROM subscriptions WHERE status = 'active'");
+        if ($res) { $metrics['active_subscriptions'] = mysqli_fetch_assoc($res)['cnt'] ?? 0; }
+
+    } catch (Exception $e) {
+        error_log("Metrics Fetch Error: " . $e->getMessage());
     }
 
     return $metrics;
 }
-
 // -------------------------------------------------------------
 // USER MANAGEMENT
 // -------------------------------------------------------------
 function get_all_users($role_filter = '', $search = '') {
     global $conn;
-    if ($conn) {
-        $sql = "SELECT id, name, email, role, phone, status, created_at FROM users WHERE 1=1";
-        $params = [];
-        $types = "";
+    $users = [];
 
-        if (!empty($role_filter)) {
-            $sql .= " AND role = ?";
-            $params[] = $role_filter;
-            $types .= "s";
-        }
-        if (!empty($search)) {
-            $sql .= " AND (name LIKE ? OR email LIKE ? OR phone LIKE ?)";
-            $searchTerm = "%{$search}%";
-            $params[] = $searchTerm;
-            $params[] = $searchTerm;
-            $params[] = $searchTerm;
-            $types .= "sss";
-        }
-        $sql .= " ORDER BY id DESC";
+    // Base Query with LEFT JOINs
+    $sql = "SELECT u.*, 
+            c.company_name,
+            CASE 
+                WHEN j.seeker_id IS NOT NULL THEN 'seeker'
+                WHEN c.company_id IS NOT NULL THEN 'company'
+                ELSE COALESCE(u.role, 'admin')
+            END AS calculated_role
+            FROM users u
+            LEFT JOIN job_seekers j ON u.user_id = j.user_id
+            LEFT JOIN company c ON u.user_id = c.user_id
+            WHERE 1=1";
 
-        $stmt = mysqli_prepare($conn, $sql);
-        if ($stmt) {
-            if (!empty($params)) {
-                mysqli_stmt_bind_param($stmt, $types, ...$params);
-            }
-            mysqli_stmt_execute($stmt);
-            $res = mysqli_stmt_get_result($stmt);
-            $users = [];
-            while ($row = mysqli_fetch_assoc($res)) {
-                $users[] = $row;
-            }
-            if (!empty($users)) return $users;
-        }
-    }
+    $params = [];
+    $types = "";
 
-    $mock_users = [
-        ['id' => 1, 'name' => 'Admin Kamal Perera', 'email' => 'admin@jobportal.lk', 'role' => 'admin', 'phone' => '+94 77 123 4567', 'status' => 'Active', 'created_at' => '2026-01-10 09:30:00'],
-        ['id' => 2, 'name' => 'Dilshan Silva', 'email' => 'dilshan.silva@gmail.com', 'role' => 'seeker', 'phone' => '+94 71 987 6543', 'status' => 'Active', 'created_at' => '2026-02-14 11:20:00'],
-        ['id' => 3, 'name' => 'Virtusa HR Team', 'email' => 'careers@virtusa.com', 'role' => 'company', 'phone' => '+94 11 234 5678', 'status' => 'Active', 'created_at' => '2026-02-18 14:45:00'],
-        ['id' => 4, 'name' => 'Nadeesha Fernando', 'email' => 'nadeesha.f@hotmail.com', 'role' => 'seeker', 'phone' => '+94 76 555 4321', 'status' => 'Active', 'created_at' => '2026-02-22 16:10:00'],
-        ['id' => 5, 'name' => 'Dialog Axiata Careers', 'email' => 'jobs@dialog.lk', 'role' => 'company', 'phone' => '+94 77 733 3333', 'status' => 'Active', 'created_at' => '2026-03-01 08:50:00'],
-        ['id' => 6, 'name' => 'Kasun Jayawardena', 'email' => 'kasun.j@yahoo.com', 'role' => 'seeker', 'phone' => '+94 70 111 2233', 'status' => 'Suspended', 'created_at' => '2026-03-05 10:15:00'],
-        ['id' => 7, 'name' => 'WSO2 Recruitment', 'email' => 'hr@wso2.com', 'role' => 'company', 'phone' => '+94 11 214 5345', 'status' => 'Active', 'created_at' => '2026-03-12 13:00:00'],
-        ['id' => 8, 'name' => 'Anura Gunasekara', 'email' => 'anura.g@gmail.com', 'role' => 'seeker', 'phone' => '+94 72 345 6789', 'status' => 'Pending', 'created_at' => '2026-03-15 17:30:00']
-    ];
-
-    if (!empty($role_filter)) {
-        $mock_users = array_values(array_filter($mock_users, fn($u) => $u['role'] === $role_filter));
-    }
+    // 🔍 Dynamic & Safe Search SQL Condition
     if (!empty($search)) {
-        $s = strtolower($search);
-        $mock_users = array_values(array_filter($mock_users, fn($u) => str_contains(strtolower($u['name']), $s) || str_contains(strtolower($u['email']), $s)));
+        $sql .= " AND (u.email LIKE ? OR u.phone LIKE ? OR c.company_name LIKE ?)";
+        $searchTerm = "%" . $search . "%";
+        $params[] = $searchTerm;
+        $params[] = $searchTerm;
+        $params[] = $searchTerm;
+        $types .= "sss";
     }
-    return $mock_users;
+
+    $sql .= " ORDER BY u.user_id DESC";
+
+    $stmt = mysqli_prepare($conn, $sql);
+    if ($stmt) {
+        if (!empty($params)) {
+            mysqli_stmt_bind_param($stmt, $types, ...$params);
+        }
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        
+        while ($row = mysqli_fetch_assoc($result)) {
+            // Standardize Keys
+            $row['id'] = $row['user_id'] ?? $row['id'] ?? 0;
+            $row['phone'] = $row['phone'] ?? 'N/A';
+            $row['status'] = !empty($row['status']) ? ucfirst(strtolower($row['status'])) : 'Active';
+            $row['created_at'] = $row['created_at'] ?? date('Y-m-d');
+            $row['role'] = $row['calculated_role'];
+
+            // Name Resolution Fallback Logic
+            $user_name = $row['name'] ?? $row['username'] ?? $row['full_name'] ?? '';
+
+            if (empty($user_name) && !empty($row['company_name'])) {
+                $user_name = $row['company_name'];
+            }
+
+            if (empty($user_name) && !empty($row['email'])) {
+                $email_parts = explode('@', $row['email']);
+                $user_name = ucfirst($email_parts[0]);
+            }
+
+            $row['name'] = !empty($user_name) ? $user_name : 'User #' . $row['id'];
+
+            // Role Filter application
+            if (!empty($role_filter) && $row['role'] !== $role_filter) {
+                continue;
+            }
+
+            $users[] = $row;
+        }
+        mysqli_stmt_close($stmt);
+    }
+
+    return $users;
 }
 
-function toggle_user_status($id, $new_status) {
+/**
+ * Update User Status in real DB ('Active' or 'Suspended') across all linked tables
+ */
+function toggle_user_status($user_id, $new_status) {
     global $conn;
-    if ($conn) {
-        $stmt = mysqli_prepare($conn, "UPDATE users SET status = ? WHERE id = ?");
-        if ($stmt) {
-            mysqli_stmt_bind_param($stmt, "si", $new_status, $id);
-            return mysqli_stmt_execute($stmt);
-        }
+    $uid = (int)$user_id;
+
+    if ($uid <= 0) return false;
+
+    if ($new_status === 'Suspended') {
+        // Suspend Company
+        mysqli_query($conn, "UPDATE company SET status = 'suspended' WHERE user_id = $uid");
+        // Suspend Job Seeker
+        mysqli_query($conn, "UPDATE job_seekers SET status = 'suspended' WHERE user_id = $uid");
+    } else {
+        // Activate Company
+        mysqli_query($conn, "UPDATE company SET status = 'approved' WHERE user_id = $uid");
+        // Activate Job Seeker
+        mysqli_query($conn, "UPDATE job_seekers SET status = 'not_hired' WHERE user_id = $uid");
     }
+
     return true;
 }
 
-function delete_user($id) {
+function delete_user($user_id) {
     global $conn;
-    if ($conn) {
-        $stmt = mysqli_prepare($conn, "DELETE FROM users WHERE id = ?");
-        if ($stmt) {
-            mysqli_stmt_bind_param($stmt, "i", $id);
-            return mysqli_stmt_execute($stmt);
-        }
+    $uid = (int)$user_id;
+
+    if ($uid <= 0) return false;
+
+    // Delete dependent profile rows first
+    mysqli_query($conn, "DELETE FROM job_seekers WHERE user_id = $uid");
+    mysqli_query($conn, "DELETE FROM company WHERE user_id = $uid");
+
+    // Delete main user row
+    $stmt = mysqli_prepare($conn, "DELETE FROM users WHERE user_id = ?");
+    if ($stmt) {
+        mysqli_stmt_bind_param($stmt, "i", $uid);
+        $success = mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
+        return $success;
     }
-    return true;
+    return false;
 }
 
 // -------------------------------------------------------------
@@ -334,78 +363,68 @@ function delete_company($id) {
 // -------------------------------------------------------------
 // JOB POSTING MODERATION
 // -------------------------------------------------------------
-function get_all_jobs_admin($status_filter = '', $category_filter = '', $search = '') {
+function get_all_jobs_admin($status = '', $category_id = '', $search = '') {
     global $conn;
-
     $jobs = [];
 
-    if ($conn) {
-        // Real Database Schema එකට අදාළ Columns සහ Joins
-        $sql = "SELECT 
-                    j.job_id AS id, 
-                    j.title, 
-                    comp.company_name, 
-                    j.location, 
-                    j.job_type, 
-                    CONCAT('Rs. ', FORMAT(j.salary_min, 0), ' - Rs. ', FORMAT(j.salary_max, 0)) AS salary_range, 
-                    j.status, 
-                    j.posted_date, 
-                    c.category_name
-                FROM jobs j
-                LEFT JOIN categories c ON j.category_id = c.category_id
-                LEFT JOIN company comp ON j.company_id = comp.company_id
-                WHERE 1=1";
+    $sql = "SELECT j.*, 
+            c.company_name,
+            cat.category_name
+            FROM jobs j
+            LEFT JOIN company c ON j.company_id = c.company_id
+            LEFT JOIN categories cat ON j.category_id = cat.category_id
+            WHERE 1=1";
 
-        if (!empty($status_filter)) {
-            $status_safe = mysqli_real_escape_string($conn, $status_filter);
-            $sql .= " AND (j.status = '$status_safe' OR j.status LIKE '$status_safe%')";
-        }
+    if (!empty($status)) {
+        $status_clean = mysqli_real_escape_string($conn, strtolower($status));
+        $sql .= " AND j.status = '$status_clean'";
+    }
 
-        if (!empty($category_filter)) {
-            $cat_safe = mysqli_real_escape_string($conn, $category_filter);
-            $sql .= " AND c.category_name = '$cat_safe'";
-        }
+    if (!empty($category_id)) {
+        $cat_id = (int)$category_id;
+        $sql .= " AND j.category_id = $cat_id";
+    }
 
-        if (!empty($search)) {
-            $s = mysqli_real_escape_string($conn, $search);
-            $sql .= " AND (j.title LIKE '%$s%' OR comp.company_name LIKE '%$s%' OR j.location LIKE '%$s%')";
-        }
+    if (!empty($search)) {
+        $s = mysqli_real_escape_string($conn, $search);
+        $sql .= " AND (j.title LIKE '%$s%' OR j.location LIKE '%$s%' OR c.company_name LIKE '%$s%')";
+    }
 
-        $sql .= " ORDER BY j.job_id DESC";
+    $sql .= " ORDER BY j.job_id DESC";
 
-        $res = mysqli_query($conn, $sql);
-
-        if ($res && mysqli_num_rows($res) > 0) {
-            while ($row = mysqli_fetch_assoc($res)) {
-                $jobs[] = $row;
-            }
+    $result = mysqli_query($conn, $sql);
+    if ($result) {
+        while ($row = mysqli_fetch_assoc($result)) {
+            $jobs[] = $row;
         }
     }
 
-    return $jobs; // Database එකෙන් ලැබෙන Real Data හෝ Empty Array එක පමණක් Return වේ
-}
-function update_job_status($id, $status) {
-    global $conn;
-    if ($conn) {
-        $stmt = mysqli_prepare($conn, "UPDATE jobs SET status = ? WHERE id = ?");
-        if ($stmt) {
-            mysqli_stmt_bind_param($stmt, "si", $status, $id);
-            return mysqli_stmt_execute($stmt);
-        }
-    }
-    return true;
+    return $jobs;
 }
 
-function delete_job_admin($id) {
+
+function update_job_status($job_id, $new_status) {
     global $conn;
-    if ($conn) {
-        $stmt = mysqli_prepare($conn, "DELETE FROM jobs WHERE id = ?");
-        if ($stmt) {
-            mysqli_stmt_bind_param($stmt, "i", $id);
-            return mysqli_stmt_execute($stmt);
-        }
-    }
-    return true;
+    $jid = (int)$job_id;
+    $status_clean = mysqli_real_escape_string($conn, strtolower($new_status));
+
+    if ($jid <= 0) return false;
+
+    $query = "UPDATE jobs SET status = '$status_clean' WHERE job_id = $jid";
+    return mysqli_query($conn, $query);
+}
+
+function delete_job_admin($job_id) {
+    global $conn;
+    $jid = (int)$job_id;
+
+    if ($jid <= 0) return false;
+
+    // Remove dependent application records if table exists
+    mysqli_query($conn, "DELETE FROM job_applications WHERE job_id = $jid");
+
+    $query = "DELETE FROM jobs WHERE job_id = $jid";
+    return mysqli_query($conn, $query);
 }
 
 // -------------------------------------------------------------
@@ -413,28 +432,21 @@ function delete_job_admin($id) {
 // -------------------------------------------------------------
 function get_all_categories_admin() {
     global $conn;
-    if ($conn) {
-        $sql = "SELECT c.id, c.name, c.icon, c.created_at, 
-                (SELECT COUNT(*) FROM jobs j WHERE j.category_id = c.id) AS job_count
-                FROM categories c ORDER BY c.name ASC";
-        $res = @mysqli_query($conn, $sql);
-        if ($res && mysqli_num_rows($res) > 0) {
-            $cats = [];
-            while ($row = mysqli_fetch_assoc($res)) $cats[] = $row;
-            return $cats;
+    $categories = [];
+
+    $result = mysqli_query($conn, "SELECT * FROM categories ORDER BY category_name ASC");
+    if (!$result) {
+        // Fallback if column is 'name'
+        $result = mysqli_query($conn, "SELECT * FROM categories ORDER BY id ASC");
+    }
+
+    if ($result) {
+        while ($row = mysqli_fetch_assoc($result)) {
+            $categories[] = $row;
         }
     }
 
-    return [
-        ['id' => 1, 'name' => 'Software Engineering', 'icon' => 'code', 'job_count' => 142, 'created_at' => '2026-01-01'],
-        ['id' => 2, 'name' => 'Cloud & DevOps', 'icon' => 'cloud', 'job_count' => 64, 'created_at' => '2026-01-01'],
-        ['id' => 3, 'name' => 'Design & Creative', 'icon' => 'pen-tool', 'job_count' => 48, 'created_at' => '2026-01-01'],
-        ['id' => 4, 'name' => 'Marketing & Sales', 'icon' => 'trending-up', 'job_count' => 52, 'created_at' => '2026-01-01'],
-        ['id' => 5, 'name' => 'Accounting & Finance', 'icon' => 'dollar-sign', 'job_count' => 38, 'created_at' => '2026-01-01'],
-        ['id' => 6, 'name' => 'Healthcare & Medical', 'icon' => 'activity', 'job_count' => 29, 'created_at' => '2026-01-01'],
-        ['id' => 7, 'name' => 'Human Resources', 'icon' => 'users', 'job_count' => 21, 'created_at' => '2026-01-01'],
-        ['id' => 8, 'name' => 'Security & Networking', 'icon' => 'shield', 'job_count' => 18, 'created_at' => '2026-01-01']
-    ];
+    return $categories;
 }
 
 function save_category($name, $icon = 'briefcase', $id = null) {

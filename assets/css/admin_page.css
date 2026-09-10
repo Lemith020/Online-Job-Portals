@@ -588,6 +588,9 @@ textarea {
 .admin-content-body {
   flex: 1;
   padding: 28px;
+  overflow-y: auto;
+  height: calc(100vh - var(--topbar-height));
+  padding-bottom: 80px;
 }
 
 .container {
@@ -1497,7 +1500,13 @@ input:checked+.toggle-slider:before {
   }
 
   .admin-main {
-    margin-left: 0;
+    flex: 1;
+    margin-left: var(--sidebar-width);
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    height: 100vh;
+    overflow: hidden;
   }
 
   .hamburger-btn {
