@@ -1,19 +1,5 @@
 <?php
-// includes/footer.php
-// Include at the very BOTTOM of every seeker page.
-// Set $page_js (filename in assets/js/) BEFORE including this file if the page needs JS.
-
-if (!isset($page_js)) $page_js = "";
-?>
-    </main><!-- /.main-content -->
-</div><!-- /.app-layout -->
-
-<footer class="site-footer">
-    <p>&copy; <?= date('Y') ?> JobPortal.lk</p>
-</footer>
-
-<?php if ($page_js): ?>
-<script src="<?= clean($page_js) ?>"></script>
-<?php endif; ?>
-</body>
-</html>
+/**
+ * JobPortal.lk - Seeker Footer (Delegates to Master Unified Footer)
+ */
+require_once __DIR__ . '/footer.php';

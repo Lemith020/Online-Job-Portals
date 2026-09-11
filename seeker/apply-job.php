@@ -74,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $page_title = "Apply for Job";
-$page_css = "seeker-browse-jobs.css";
+$page_css = "seeker_page_css/browse-jobs.css";
 require_once '../includes/header.php';
 require_once '../includes/seeker-sidebar.php';
 ?>

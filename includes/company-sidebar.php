@@ -24,7 +24,7 @@
         </li>
         <li class="sidebar-divider"></li>
         <li>
-            <a href="logout.php" class="logout-item"><i class="fa-solid fa-right-from-bracket"></i> <span>Logout</span></a>
+            <a href="<?php echo BASE_URL; ?>/auth/logout.php" class="logout-item"><i class="fa-solid fa-right-from-bracket"></i> <span>Logout</span></a>
         </li>
     </ul>
 </aside>

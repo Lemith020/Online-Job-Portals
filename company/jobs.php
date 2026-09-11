@@ -150,17 +150,17 @@ $categories_result = mysqli_query($conn, "SELECT * FROM categories ORDER BY cate
     <?php if ($jobs_result && mysqli_num_rows($jobs_result) > 0) : ?>
         <?php while ($job = mysqli_fetch_assoc($jobs_result)) : ?>
         <div class="list-item">
-            <div>
+            <div class="list-item-main">
                 <div class="list-item-title"><?php echo htmlspecialchars($job['title']); ?></div>
                 <div class="list-item-meta">
-                    <span><i class="fa-solid fa-location-dot"></i> <?php echo htmlspecialchars($job['location']); ?></span>
-                    <span><i class="fa-solid fa-tag"></i> <?php echo htmlspecialchars($job['category_name'] ?? 'General'); ?></span>
-                    <span><i class="fa-solid fa-clock"></i> Posted <?php echo date('d/m/Y', strtotime($job['posted_date'])); ?></span>
-                    <span><i class="fa-solid fa-hourglass-end"></i> Expires <?php echo date('d/m/Y', strtotime($job['expiry_date'])); ?></span>
+                    <span class="meta-tag"><i class="fa-solid fa-location-dot"></i> <?php echo htmlspecialchars($job['location']); ?></span>
+                    <span class="meta-tag"><i class="fa-solid fa-tag"></i> <?php echo htmlspecialchars($job['category_name'] ?? 'General'); ?></span>
+                    <span class="meta-tag"><i class="fa-regular fa-calendar-check"></i> Posted <?php echo date('d/m/Y', strtotime($job['posted_date'])); ?></span>
+                    <span class="meta-tag"><i class="fa-regular fa-clock"></i> Expires <?php echo date('d/m/Y', strtotime($job['expiry_date'])); ?></span>
                 </div>
             </div>
 
-            <div style="display:flex; align-items:center; gap:12px;">
+            <div class="list-item-actions">
                 <span class="badge badge-<?php echo strtolower($job['status']); ?>"><?php echo ucfirst($job['status']); ?></span>
                 <button class="btn btn-outline btn-sm" onclick='openJobModal(<?php echo json_encode($job); ?>)'>
                     <i class="fa-solid fa-pen"></i> Edit

@@ -34,45 +34,21 @@ require_once __DIR__ . '/../includes/navbar.php';
   </div>
 </div>
 
-<!-- 6 KPI Metric Cards Grid -->
+<!-- 4 KPI Metric Cards Grid -->
 <div class="metrics-grid">
   <!-- 1. Total Users -->
   <div class="metric-card" onclick="location.href='users.php'">
     <div class="metric-info">
       <span class="metric-title">Total Users</span>
       <span class="metric-value"><?php echo number_format($metrics['total_users']); ?></span>
-      <span class="metric-desc">Registered Job Seekers & Employers</span>
+      <span class="metric-desc">Registered Users</span>
     </div>
     <div class="metric-icon-box icon-blue">
       <i class="fa-solid fa-users"></i>
     </div>
   </div>
 
-  <!-- 2. Job Seekers -->
-  <div class="metric-card" onclick="location.href='job-seekers.php'">
-    <div class="metric-info">
-      <span class="metric-title">Job Seekers</span>
-      <span class="metric-value"><?php echo number_format($metrics['total_job_seekers']); ?></span>
-      <span class="metric-desc">Candidates looking for opportunities</span>
-    </div>
-    <div class="metric-icon-box icon-teal">
-      <i class="fa-solid fa-user-graduate"></i>
-    </div>
-  </div>
-
-  <!-- 3. Companies -->
-  <div class="metric-card" onclick="location.href='companies.php'">
-    <div class="metric-info">
-      <span class="metric-title">Total Companies</span>
-      <span class="metric-value"><?php echo number_format($metrics['total_companies']); ?></span>
-      <span class="metric-desc">Verified Corporate Employers</span>
-    </div>
-    <div class="metric-icon-box icon-indigo">
-      <i class="fa-solid fa-building"></i>
-    </div>
-  </div>
-
-  <!-- 4. Total Jobs Posted -->
+  <!-- 2. Total Jobs Posted -->
   <div class="metric-card" onclick="location.href='jobs.php'">
     <div class="metric-info">
       <span class="metric-title">Active Job Listings</span>
@@ -84,7 +60,7 @@ require_once __DIR__ . '/../includes/navbar.php';
     </div>
   </div>
 
-  <!-- 5. Pending Approvals -->
+  <!-- 3. Pending Approvals -->
   <div class="metric-card" onclick="location.href='jobs.php?status=Pending+Approval'">
     <div class="metric-info">
       <span class="metric-title">Pending Approvals</span>
@@ -96,15 +72,15 @@ require_once __DIR__ . '/../includes/navbar.php';
     </div>
   </div>
 
-  <!-- 6. Flagged Reviews -->
-<div class="metric-card" onclick="location.href='reviews.php?status=Flagged'">
+  <!-- 4. Active Subscriptions -->
+  <div class="metric-card" onclick="location.href='subscriptions.php'">
     <div class="metric-info">
-      <span class="metric-title">Flagged Reviews</span>
-      <span class="metric-value text-danger"><?php echo number_format($metrics['flagged_reviews']); ?></span>
-      <span class="metric-desc">Reported candidate feedback</span>
+      <span class="metric-title">Active Subscriptions</span>
+      <span class="metric-value text-emerald"><?php echo number_format($metrics['active_subscriptions'] ?? 0); ?></span>
+      <span class="metric-desc">Current active plans</span>
     </div>
-    <div class="metric-icon-box icon-rose">
-      <i class="fa-solid fa-triangle-exclamation"></i>
+    <div class="metric-icon-box icon-teal">
+      <i class="fa-solid fa-credit-card"></i>
     </div>
   </div>
 </div>
@@ -129,24 +105,13 @@ require_once __DIR__ . '/../includes/navbar.php';
           <i class="fa-solid fa-chevron-right qa-arrow"></i>
         </a>
 
-        <a href="<?php echo BASE_URL; ?>/admin/companies.php?status=Pending+Approval" class="quick-action-item">
+        <a href="<?php echo BASE_URL; ?>/admin/categories.php" class="quick-action-item">
           <div class="qa-icon-wrapper bg-blue-light">
-            <i class="fa-solid fa-building-circle-check text-primary"></i>
+            <i class="fa-solid fa-tags text-primary"></i>
           </div>
           <div class="qa-details">
-            <strong>Verify New Employers</strong>
-            <span>Review submitted business licenses and company profiles</span>
-          </div>
-          <i class="fa-solid fa-chevron-right qa-arrow"></i>
-        </a>
-
-        <a href="<?php echo BASE_URL; ?>/admin/reviews.php?status=Flagged" class="quick-action-item">
-          <div class="qa-icon-wrapper bg-rose-light">
-            <i class="fa-solid fa-flag text-danger"></i>
-          </div>
-          <div class="qa-details">
-            <strong>Resolve Flagged Reviews</strong>
-            <span><?php echo $metrics['flagged_reviews']; ?> reviews reported by companies or users</span>
+            <strong>Manage Job Categories</strong>
+            <span>Add or edit industry sectors and classifications</span>
           </div>
           <i class="fa-solid fa-chevron-right qa-arrow"></i>
         </a>
@@ -158,6 +123,17 @@ require_once __DIR__ . '/../includes/navbar.php';
           <div class="qa-details">
             <strong>Manage Employer Subscriptions</strong>
             <span><?php echo $metrics['active_subscriptions']; ?> active plans across registered companies</span>
+          </div>
+          <i class="fa-solid fa-chevron-right qa-arrow"></i>
+        </a>
+
+        <a href="<?php echo BASE_URL; ?>/admin/users.php" class="quick-action-item">
+          <div class="qa-icon-wrapper bg-purple-light">
+            <i class="fa-solid fa-users text-primary"></i>
+          </div>
+          <div class="qa-details">
+            <strong>Manage Portal Users</strong>
+            <span>View, filter, or manage user accounts and access</span>
           </div>
           <i class="fa-solid fa-chevron-right qa-arrow"></i>
         </a>

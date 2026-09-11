@@ -1,92 +1,91 @@
 <?php
 /**
- * JobPortal.lk - Clean Center-Aligned Fixed Footer
+ * JobPortal.lk - Master Unified Footer
  */
 ?>
-      <!-- Main Content Closing -->
-      </main>
-    </div> <!-- /.layout / .admin-layout -->
+<?php if (!empty($GLOBALS['layout_main_open'])) : ?>
+  </main>
+<?php endif; ?>
+</div> <!-- /.layout / .admin-layout / .portal-layout -->
 
-    <!-- Global Fixed Center Footer -->
-    <footer class="site-footer" id="siteFooter">
-      <p>&copy; <?php echo date('Y'); ?> <strong>JobPortal.lk</strong>. All rights reserved. Sri Lanka's Premier Job Network.</p>
-    </footer>
+<!-- Global Center Footer -->
+<footer class="site-footer" id="siteFooter">
+  <p>&copy; <?php echo date('Y'); ?> <strong>JobPortal.lk</strong>. All rights reserved. Sri Lanka's Premier Job Network.</p>
+</footer>
 
-    <!-- Fixed Center Footer Styles & Dynamic Sidebar Sync -->
-    <style>
-      /* Bottom Fixed Position & Center Alignment */
-      .site-footer {
-        position: fixed;
-        bottom: 0;
-        right: 0;
-        height: 48px;
-        left: 240px; /* Standard Sidebar Width */
-        background: #ffffff;
-        border-top: 1px solid #e2e8f0;
-        padding: 0 24px;
-        display: flex;
-        align-items: center;
-        justify-content: center; /* Text එක මැදට ගැනීම */
-        text-align: center;
-        font-size: 13px;
-        color: #64748b;
-        z-index: 80;
-        transition: left 0.2s ease; /* Sidebar Toggle එකට Smooth Adapt වීම */
+<!-- Global UI Controller Scripts -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // 1. Sidebar Collapse & Mobile Toggle
+  const toggleBtns = [
+    document.getElementById('hamburgerBtn'),
+    document.getElementById('sidebarToggle')
+  ].filter(Boolean);
+
+  const sidebar = document.getElementById('sidebar') || document.getElementById('adminSidebar');
+
+  // Restore saved collapse state on desktop
+  if (localStorage.getItem('portal_sidebar_collapsed') === 'true') {
+    if (window.innerWidth > 768) {
+      document.body.classList.add('sidebar-collapsed');
+      if (sidebar) sidebar.classList.add('toggled');
+    }
+  }
+
+  toggleBtns.forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      if (window.innerWidth <= 768) {
+        document.body.classList.toggle('sidebar-open');
+        if (sidebar) sidebar.classList.toggle('toggled');
+      } else {
+        document.body.classList.toggle('sidebar-collapsed');
+        if (sidebar) sidebar.classList.toggle('toggled');
+        const isCollapsed = document.body.classList.contains('sidebar-collapsed');
+        localStorage.setItem('portal_sidebar_collapsed', isCollapsed);
       }
+    });
+  });
 
-      .site-footer p {
-        margin: 0;
+  // Close mobile sidebar when clicking outside
+  document.addEventListener('click', function(e) {
+    if (window.innerWidth <= 768 && sidebar && sidebar.classList.contains('toggled')) {
+      if (!sidebar.contains(e.target) && !toggleBtns.some(b => b.contains(e.target))) {
+        sidebar.classList.remove('toggled');
+        document.body.classList.remove('sidebar-open');
       }
+    }
+  });
 
-      /* Sidebar Toggled / Collapsed ඇති විට Footer එක Full-Width වීම */
-      .sidebar.toggled ~ .site-footer,
-      .sidebar.collapsed ~ .site-footer,
-      body.sidebar-toggled .site-footer {
-        left: 0 !important;
+  // 2. Profile Dropdown Menu Toggle
+  const profileMenu = document.getElementById('profileMenu');
+  const profileBtn = document.getElementById('profileBtn') || document.getElementById('profileTrigger');
+
+  if (profileBtn && profileMenu) {
+    profileBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      profileMenu.classList.toggle('open');
+    });
+
+    document.addEventListener('click', function(e) {
+      if (!profileMenu.contains(e.target)) {
+        profileMenu.classList.remove('open');
       }
+    });
+  }
 
-      /* Content එක Footer එකට යටවීම වැළැක්වීම */
-      .main-content {
-        padding-bottom: 70px !important;
-      }
+  // 3. Auto-dismiss alerts after 5 seconds
+  const autoAlerts = document.querySelectorAll('.alert:not(.alert-permanent)');
+  autoAlerts.forEach(alert => {
+    setTimeout(() => {
+      alert.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+      alert.style.opacity = '0';
+      alert.style.transform = 'translateY(-6px)';
+      setTimeout(() => alert.remove(), 400);
+    }, 5000);
+  });
+});
+</script>
 
-      @media (max-width: 768px) {
-        .site-footer {
-          left: 0;
-          padding: 0 16px;
-          font-size: 12px;
-        }
-      }
-    </style>
-
-    <!-- Global Core Scripts -->
-    <script src="<?php echo BASE_URL; ?>/assets/js/script.js"></script>
-
-    <!-- Dynamic JS for Footer & Sidebar Sync -->
-    <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        const toggleBtn = document.getElementById('sidebarToggle');
-        const sidebar = document.querySelector('.sidebar');
-        const footer = document.getElementById('siteFooter');
-
-        if (toggleBtn && sidebar && footer) {
-          toggleBtn.addEventListener('click', function() {
-            setTimeout(function() {
-              if (sidebar.classList.contains('toggled') || sidebar.classList.contains('collapsed')) {
-                footer.style.left = '0';
-              } else {
-                footer.style.left = '240px';
-              }
-            }, 10);
-          });
-        }
-      });
-    </script>
-
-    <!-- Page Specific Script Include -->
-    <?php if (isset($page_js) && !empty($page_js)) : ?>
-      <script src="<?php echo BASE_URL; ?>/assets/js/<?php echo htmlspecialchars($page_js); ?>"></script>
-    <?php endif; ?>
-
-  </body>
+</body>
 </html>

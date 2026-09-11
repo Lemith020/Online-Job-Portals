@@ -27,10 +27,10 @@ if (ini_get("session.use_cookies")) {
 
 session_destroy();
 
-// Redirect to login page with flash message
+// Redirect to index page with flash message
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 set_flash("You have been logged out successfully.", "success");
-header("Location: " . BASE_URL . "/auth/login.php");
+header("Location: " . BASE_URL . "/index.php");
 exit;

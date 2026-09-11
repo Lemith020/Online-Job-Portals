@@ -70,45 +70,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link rel="stylesheet" href="<?php echo BASE_URL; ?>/assets/css/admin_page.css">
-  
-  <style>
-    body {
-      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      padding: 24px;
-    }
-    .auth-card {
-      background: #ffffff;
-      width: 100%;
-      max-width: 480px;
-      border-radius: 16px;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
-      padding: 40px 36px;
-    }
-  </style>
+  <link rel="stylesheet" href="<?php echo BASE_URL; ?>/assets/css/style.css">
 </head>
-<body>
-  <div class="auth-card">
+<body class="auth-page-body">
+  <div class="auth-card auth-card-wide">
     <div class="text-center mb-4">
-      <h1 class="page-title mb-1" style="font-size:24px;">Create an Account</h1>
-      <p class="text-muted" style="font-size:14px;">Join Sri Lanka's leading job network today</p>
+      <a href="<?php echo BASE_URL; ?>/index.php" class="auth-brand">
+        <div class="auth-brand-icon"><i class="fa-solid fa-briefcase"></i></div>
+        <span class="auth-brand-text">JobPortal<span>.lk</span></span>
+      </a>
+      <h1 class="page-title mb-1" style="font-size:22px;">Create an Account</h1>
+      <p class="text-muted" style="font-size:13.5px;">Join Sri Lanka's premier job network</p>
     </div>
 
     <?php if (!empty($error)): ?>
       <div class="alert alert-danger mb-4">
-        <span class="alert-icon">✕</span>
-        <span class="alert-text"><?php echo htmlspecialchars($error); ?></span>
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <span><?php echo htmlspecialchars($error); ?></span>
       </div>
     <?php endif; ?>
 
     <?php if (!empty($success)): ?>
       <div class="alert alert-success mb-4">
-        <span class="alert-icon">✓</span>
-        <span class="alert-text"><?php echo htmlspecialchars($success); ?></span>
+        <i class="fa-solid fa-circle-check"></i>
+        <span><?php echo htmlspecialchars($success); ?></span>
       </div>
     <?php endif; ?>
 

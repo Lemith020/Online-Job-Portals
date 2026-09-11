@@ -124,7 +124,7 @@ if (!empty($search_query) && isset($conn)) {
       color: #1e293b;
     }
 
-    /* Cards Grid & Layout */
+    /* Layout Containers */
     .site-wrapper {
       flex: 1;
     }
@@ -133,6 +133,8 @@ if (!empty($search_query) && isset($conn)) {
       margin: 40px auto;
       padding: 0 20px;
     }
+    
+    /* Category Cards Grid */
     .categories-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -154,12 +156,86 @@ if (!empty($search_query) && isset($conn)) {
       border-color: #3b82f6;
     }
     
-    .jobs-card {
+    /* Featured Jobs Card Grid Styles */
+    .jobs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 20px;
+    }
+    .job-card-item {
       background: #ffffff;
-      border-radius: 12px;
       border: 1px solid #e2e8f0;
-      padding: 24px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+      border-radius: 14px;
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.2s ease-in-out;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+      position: relative;
+    }
+    .job-card-item:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.06);
+      border-color: #2563eb;
+    }
+    .job-card-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+    .company-icon-avatar {
+      width: 46px;
+      height: 46px;
+      border-radius: 10px;
+      background: #f1f5f9;
+      color: #2563eb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 800;
+      flex-shrink: 0;
+      border: 1px solid #e2e8f0;
+    }
+    .job-title-text {
+      font-size: 16px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 2px;
+      line-height: 1.3;
+    }
+    .company-name-text {
+      font-size: 13px;
+      color: #64748b;
+      font-weight: 500;
+    }
+    .job-meta-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      color: #64748b;
+    }
+    .job-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .job-card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 14px;
+      border-top: 1px dashed #e2e8f0;
+      margin-top: auto;
+    }
+    .salary-text {
+      font-size: 14px;
+      font-weight: 700;
+      color: #059669;
     }
 
     /* Footer Fix */
@@ -192,33 +268,47 @@ if (!empty($search_query) && isset($conn)) {
       </span>
     </a>
 
+    <nav class="public-nav-links" style="display: flex; align-items: center; gap: 24px;">
+      <a href="<?php echo BASE_URL; ?>/index.php" style="color: #0f172a; font-weight: 600; font-size: 14px;">Home</a>
+      <a href="<?php echo BASE_URL; ?>/seeker/browse-jobs.php" style="color: #64748b; font-weight: 500; font-size: 14px;">Jobs</a>
+      <a href="#categories" style="color: #64748b; font-weight: 500; font-size: 14px;">Categories</a>
+      <a href="#about" style="color: #64748b; font-weight: 500; font-size: 14px;">About Us</a>
+      <a href="#contact" style="color: #64748b; font-weight: 500; font-size: 14px;">Contact</a>
+    </nav>
+
     <div style="display: flex; align-items: center; gap: 12px;">
       <?php if ($role === 'guest'): ?>
-        <a href="<?php echo BASE_URL; ?>/auth/login.php" style="padding: 8px 16px; text-decoration: none; border: 1px solid #cbd5e1; border-radius: 6px; color: #334155; font-weight: 600;">
-          <i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In
+        <a href="<?php echo BASE_URL; ?>/auth/login.php" class="btn btn-outline btn-sm" style="padding: 8px 18px; border-radius: 8px; font-weight: 600;">
+          Login
         </a>
-        <a href="<?php echo BASE_URL; ?>/auth/register.php" style="padding: 8px 16px; text-decoration: none; background: #2563eb; color: white; border-radius: 6px; font-weight: 600;">
-          <i class="fa-solid fa-user-plus"></i> Register
+        <a href="<?php echo BASE_URL; ?>/auth/register.php" class="btn btn-primary btn-sm" style="padding: 8px 20px; border-radius: 8px; font-weight: 600;">
+          Register
         </a>
       <?php else: ?>
         <span style="font-size: 14px; color: #64748b;">Welcome, <strong><?php echo htmlspecialchars($user_name); ?></strong></span>
         <?php if ($role === 'admin'): ?>
-          <a href="<?php echo BASE_URL; ?>/admin/dashboard.php" style="padding: 8px 16px; text-decoration: none; background: #2563eb; color: white; border-radius: 6px; font-weight: 600;">
+          <a href="<?php echo BASE_URL; ?>/admin/dashboard.php" class="btn btn-primary btn-sm" style="padding: 8px 16px;">
             <i class="fa-solid fa-gauge-high"></i> Admin Dashboard
           </a>
         <?php elseif ($role === 'company'): ?>
-          <a href="<?php echo BASE_URL; ?>/company/dashboard.php" style="padding: 8px 16px; text-decoration: none; background: #2563eb; color: white; border-radius: 6px; font-weight: 600;">
+          <a href="<?php echo BASE_URL; ?>/company/dashboard.php" class="btn btn-primary btn-sm" style="padding: 8px 16px;">
             <i class="fa-solid fa-building"></i> Employer Portal
           </a>
         <?php else: ?>
-          <a href="<?php echo BASE_URL; ?>/seeker/dashboard.php" style="padding: 8px 16px; text-decoration: none; background: #2563eb; color: white; border-radius: 6px; font-weight: 600;">
+          <a href="<?php echo BASE_URL; ?>/seeker/dashboard.php" class="btn btn-primary btn-sm" style="padding: 8px 16px;">
             <i class="fa-solid fa-user"></i> Candidate Portal
           </a>
         <?php endif; ?>
-        <a href="<?php echo BASE_URL; ?>/auth/logout.php" style="padding: 8px 16px; text-decoration: none; border: 1px solid #cbd5e1; border-radius: 6px; color: #334155; font-weight: 600;">Logout</a>
+        <a href="<?php echo BASE_URL; ?>/auth/logout.php" class="btn btn-outline btn-sm" style="padding: 8px 16px;">Logout</a>
       <?php endif; ?>
     </div>
   </header>
+
+  <?php if (function_exists('display_flash')) : ?>
+    <div style="max-width: 1200px; margin: 16px auto 0; padding: 0 20px; width: 100%;">
+      <?php display_flash(); ?>
+    </div>
+  <?php endif; ?>
 
   <div class="site-wrapper">
     <!-- Hero Section -->
@@ -242,7 +332,7 @@ if (!empty($search_query) && isset($conn)) {
 
       <!-- Categories Section Cards -->
       <?php if (!empty($categories)) : ?>
-      <div style="margin-bottom: 24px; text-align: center;">
+      <div id="categories" style="margin-bottom: 24px; text-align: center;">
         <h2 style="font-size: 24px; color: #0f172a; margin-bottom: 6px;">Explore Popular Job Categories</h2>
         <p style="color: #64748b; font-size: 14px;">Find roles tailored to your specialization</p>
       </div>
@@ -260,52 +350,62 @@ if (!empty($search_query) && isset($conn)) {
       </div>
       <?php endif; ?>
 
-      <!-- Featured Jobs Card Table -->
-      <div class="jobs-card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-          <h3 style="margin: 0; font-size: 20px; color: #0f172a;">
-            <i class="fa-solid fa-fire" style="color: #2563eb;"></i> 
-            <?php echo !empty($search_query) ? 'Search Results for "' . htmlspecialchars($search_query) . '"' : 'Latest Verified Job Openings'; ?>
-          </h3>
-          <?php if (!empty($search_query)) : ?>
-            <a href="index.php" style="font-size: 14px; color: #ef4444; text-decoration: none; font-weight: 600;"><i class="fa-solid fa-xmark"></i> Clear Search</a>
-          <?php endif; ?>
+      <!-- Featured Jobs Grid Cards (Replaced Table with Modern Cards) -->
+      <div style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <h2 style="margin: 0; font-size: 24px; color: #0f172a; font-weight: 800;">
+            <i class="fa-solid fa-fire" style="color: #2563eb; margin-right: 6px;"></i> 
+            <?php echo !empty($search_query) ? 'Search Results for "' . htmlspecialchars($search_query) . '"' : 'Featured Jobs'; ?>
+          </h2>
+          <p style="color: #64748b; font-size: 14px; margin-top: 4px;">Explore latest verified career opportunities</p>
         </div>
+        <?php if (!empty($search_query)) : ?>
+          <a href="index.php" style="font-size: 14px; color: #ef4444; text-decoration: none; font-weight: 600;"><i class="fa-solid fa-xmark"></i> Clear Search</a>
+        <?php endif; ?>
+      </div>
 
-        <div style="overflow-x: auto;">
-          <table style="width: 100%; border-collapse: collapse; text-align: left;">
-            <thead>
-              <tr style="border-bottom: 2px solid #e2e8f0; color: #64748b; font-size: 14px;">
-                <th style="padding: 12px;">Position</th>
-                <th style="padding: 12px;">Company</th>
-                <th style="padding: 12px;">Type</th>
-                <th style="padding: 12px;">Location</th>
-                <th style="padding: 12px;">Compensation</th>
-                <th style="padding: 12px; text-align: right;">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              <?php if (!empty($featured_jobs)) : ?>
-                <?php foreach ($featured_jobs as $fj): ?>
-                  <tr style="border-bottom: 1px solid #f1f5f9;">
-                    <td style="padding: 16px 12px; color: #0f172a;"><strong><?php echo htmlspecialchars($fj['title'] ?? ''); ?></strong></td>
-                    <td style="padding: 16px 12px; color: #475569;"><?php echo htmlspecialchars($fj['company_name'] ?? 'Company'); ?></td>
-                    <td style="padding: 16px 12px;"><span style="background: #ccfbf1; color: #0d9488; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;"><?php echo htmlspecialchars($fj['job_type'] ?? 'Full Time'); ?></span></td>
-                    <td style="padding: 16px 12px; color: #64748b;"><i class="fa-solid fa-location-dot"></i> <?php echo htmlspecialchars($fj['location'] ?? 'Sri Lanka'); ?></td>
-                    <td style="padding: 16px 12px; color: #059669; font-weight: 700;"><?php echo htmlspecialchars($fj['salary_range'] ?? $fj['salary'] ?? 'Negotiable'); ?></td>
-                    <td style="padding: 16px 12px; text-align: right;">
-                      <a href="<?php echo BASE_URL; ?>/auth/login.php" style="padding: 8px 16px; background: #2563eb; color: white; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600;">Apply Now</a>
-                    </td>
-                  </tr>
-                <?php endforeach; ?>
-              <?php else : ?>
-                <tr>
-                  <td colspan="6" style="padding: 24px; text-align: center; color: #64748b;">No job openings found matching your criteria.</td>
-                </tr>
-              <?php endif; ?>
-            </tbody>
-          </table>
-        </div>
+      <div class="jobs-grid">
+        <?php if (!empty($featured_jobs)) : ?>
+          <?php foreach ($featured_jobs as $fj): ?>
+            <div class="job-card-item">
+              <div>
+                <div class="job-card-header">
+                  <div class="company-icon-avatar">
+                    <i class="fa-solid fa-building"></i>
+                  </div>
+                  <div>
+                    <h3 class="job-title-text"><?php echo htmlspecialchars($fj['title'] ?? ''); ?></h3>
+                    <span class="company-name-text"><?php echo htmlspecialchars($fj['company_name'] ?? 'Company'); ?></span>
+                  </div>
+                </div>
+
+                <div class="job-meta-list">
+                  <div class="job-meta-item">
+                    <i class="fa-solid fa-location-dot" style="color: #3b82f6;"></i>
+                    <span><?php echo htmlspecialchars($fj['location'] ?? 'Sri Lanka'); ?></span>
+                  </div>
+                  <div class="job-meta-item">
+                    <span style="background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 6px; font-size: 12px; font-weight: 700;">
+                      <?php echo htmlspecialchars($fj['job_type'] ?? 'Full-time'); ?>
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="job-card-footer">
+                <span class="salary-text"><?php echo htmlspecialchars($fj['salary_range'] ?? $fj['salary'] ?? 'Negotiable'); ?></span>
+                <a href="<?php echo BASE_URL; ?>/auth/login.php" style="padding: 8px 18px; background: #2563eb; color: white; border-radius: 8px; text-decoration: none; font-size: 13px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
+                  Apply Now <i class="fa-solid fa-arrow-right" style="font-size: 11px;"></i>
+                </a>
+              </div>
+            </div>
+          <?php endforeach; ?>
+        <?php else : ?>
+          <div style="grid-column: 1 / -1; background: white; padding: 40px; text-align: center; border-radius: 12px; border: 1px solid #e2e8f0; color: #64748b;">
+            <i class="fa-solid fa-briefcase" style="font-size: 32px; color: #94a3b8; margin-bottom: 12px; display: block;"></i>
+            No job openings found matching your criteria.
+          </div>
+        <?php endif; ?>
       </div>
 
     </div>
