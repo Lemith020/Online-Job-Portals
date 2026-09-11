@@ -270,8 +270,8 @@ if (!empty($search_query) && isset($conn)) {
 
     <nav class="public-nav-links" style="display: flex; align-items: center; gap: 24px;">
       <a href="<?php echo BASE_URL; ?>/index.php" style="color: #0f172a; font-weight: 600; font-size: 14px;">Home</a>
-      <a href="<?php echo BASE_URL; ?>/seeker/browse-jobs.php" style="color: #64748b; font-weight: 500; font-size: 14px;">Jobs</a>
-      <a href="#categories" style="color: #64748b; font-weight: 500; font-size: 14px;">Categories</a>
+      <a href="#featured-jobs" onclick="setTimeout(function(){ alert('Please log in to your Seeker account to view and apply for jobs.'); }, 500);" style="color: #64748b; font-weight: 500; font-size: 14px;">Jobs</a>
+      <!-- <a href="#categories" style="color: #64748b; font-weight: 500; font-size: 14px;">Categories</a> -->
       <a href="#about" style="color: #64748b; font-weight: 500; font-size: 14px;">About Us</a>
       <a href="#contact" style="color: #64748b; font-weight: 500; font-size: 14px;">Contact</a>
     </nav>
@@ -364,49 +364,52 @@ if (!empty($search_query) && isset($conn)) {
         <?php endif; ?>
       </div>
 
-      <div class="jobs-grid">
-        <?php if (!empty($featured_jobs)) : ?>
-          <?php foreach ($featured_jobs as $fj): ?>
-            <div class="job-card-item">
-              <div>
-                <div class="job-card-header">
-                  <div class="company-icon-avatar">
-                    <i class="fa-solid fa-building"></i>
-                  </div>
-                  <div>
-                    <h3 class="job-title-text"><?php echo htmlspecialchars($fj['title'] ?? ''); ?></h3>
-                    <span class="company-name-text"><?php echo htmlspecialchars($fj['company_name'] ?? 'Company'); ?></span>
-                  </div>
-                </div>
-
-                <div class="job-meta-list">
-                  <div class="job-meta-item">
-                    <i class="fa-solid fa-location-dot" style="color: #3b82f6;"></i>
-                    <span><?php echo htmlspecialchars($fj['location'] ?? 'Sri Lanka'); ?></span>
-                  </div>
-                  <div class="job-meta-item">
-                    <span style="background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 6px; font-size: 12px; font-weight: 700;">
-                      <?php echo htmlspecialchars($fj['job_type'] ?? 'Full-time'); ?>
-                    </span>
-                  </div>
-                </div>
+<!-- Featured Jobs Anchor Section -->
+<div id="featured-jobs" style="scroll-margin-top: 90px;">
+  <div class="jobs-grid">
+    <?php if (!empty($featured_jobs)) : ?>
+      <?php foreach ($featured_jobs as $fj): ?>
+        <div class="job-card-item">
+          <div>
+            <div class="job-card-header">
+              <div class="company-icon-avatar">
+                <i class="fa-solid fa-building"></i>
               </div>
-
-              <div class="job-card-footer">
-                <span class="salary-text"><?php echo htmlspecialchars($fj['salary_range'] ?? $fj['salary'] ?? 'Negotiable'); ?></span>
-                <a href="<?php echo BASE_URL; ?>/auth/login.php" style="padding: 8px 18px; background: #2563eb; color: white; border-radius: 8px; text-decoration: none; font-size: 13px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
-                  Apply Now <i class="fa-solid fa-arrow-right" style="font-size: 11px;"></i>
-                </a>
+              <div>
+                <h3 class="job-title-text"><?php echo htmlspecialchars($fj['title'] ?? ''); ?></h3>
+                <span class="company-name-text"><?php echo htmlspecialchars($fj['company_name'] ?? 'Company'); ?></span>
               </div>
             </div>
-          <?php endforeach; ?>
-        <?php else : ?>
-          <div style="grid-column: 1 / -1; background: white; padding: 40px; text-align: center; border-radius: 12px; border: 1px solid #e2e8f0; color: #64748b;">
-            <i class="fa-solid fa-briefcase" style="font-size: 32px; color: #94a3b8; margin-bottom: 12px; display: block;"></i>
-            No job openings found matching your criteria.
+
+            <div class="job-meta-list">
+              <div class="job-meta-item">
+                <i class="fa-solid fa-location-dot" style="color: #3b82f6;"></i>
+                <span><?php echo htmlspecialchars($fj['location'] ?? 'Sri Lanka'); ?></span>
+              </div>
+              <div class="job-meta-item">
+                <span style="background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 6px; font-size: 12px; font-weight: 700;">
+                  <?php echo htmlspecialchars($fj['job_type'] ?? 'Full-time'); ?>
+                </span>
+              </div>
+            </div>
           </div>
-        <?php endif; ?>
+
+          <div class="job-card-footer">
+            <span class="salary-text"><?php echo htmlspecialchars($fj['salary_range'] ?? $fj['salary'] ?? 'Negotiable'); ?></span>
+            <a href="<?php echo BASE_URL; ?>/auth/login.php" style="padding: 8px 18px; background: #2563eb; color: white; border-radius: 8px; text-decoration: none; font-size: 13px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
+              Apply Now <i class="fa-solid fa-arrow-right" style="font-size: 11px;"></i>
+            </a>
+          </div>
+        </div>
+      <?php endforeach; ?>
+    <?php else : ?>
+      <div style="grid-column: 1 / -1; background: white; padding: 40px; text-align: center; border-radius: 12px; border: 1px solid #e2e8f0; color: #64748b;">
+        <i class="fa-solid fa-briefcase" style="font-size: 32px; color: #94a3b8; margin-bottom: 12px; display: block;"></i>
+        No job openings found matching your criteria.
       </div>
+    <?php endif; ?>
+  </div>
+</div>
 
     </div>
   </div>
