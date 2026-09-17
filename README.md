@@ -3,48 +3,7 @@
 
 
 
-### `skills/`
 
-
-skills/
-├── index.php
-├── add.php
-└── delete.php
-
-
-View / Add / Delete skills.
-
-### `jobs/`
-
-
-jobs/
-├── index.php
-├── view.php
-└── apply.php
-
-
-Search jobs / View job / Apply.
-
-### `applications/`
-
-
-applications/
-├── index.php
-└── view.php
-
-
-View submitted applications / Application details.
-
-### `interviews/`
-
-
-interviews/
-└── index.php
-
-
-View scheduled interviews.
-
-### `alerts/`
 
 
 alerts/
