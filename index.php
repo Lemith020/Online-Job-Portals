@@ -10,6 +10,10 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+// Kunin ang System Brand Name mula sa Database
+$sys_settings = function_exists('get_system_settings') ? get_system_settings() : [];
+$site_name = !empty($sys_settings['site_name']) ? $sys_settings['site_name'] : 'JobPortal.lk';
+
 $role = $_SESSION['role'] ?? 'guest';
 $user_name = $_SESSION['user_name'] ?? ($_SESSION['first_name'] ?? '');
 
@@ -50,7 +54,7 @@ if (!empty($search_query) && isset($conn)) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>JobPortal.lk | Sri Lanka's Premier Job Network</title>
+  <title><?php echo htmlspecialchars($site_name); ?> | Sri Lanka's Premier Job Network</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -264,14 +268,13 @@ if (!empty($search_query) && isset($conn)) {
     <a href="<?php echo BASE_URL; ?>/index.php" style="text-decoration: none; display: flex; align-items: center; gap: 10px;">
       <div style="background: #2563eb; color: white; padding: 8px 12px; border-radius: 8px;"><i class="fa-solid fa-briefcase"></i></div>
       <span style="color: #0f172a; font-size: 20px; font-weight: 800;">
-        JobPortal<span style="color: #2563eb;">.lk</span>
+        <?php echo htmlspecialchars($site_name); ?>
       </span>
     </a>
 
     <nav class="public-nav-links" style="display: flex; align-items: center; gap: 24px;">
       <a href="<?php echo BASE_URL; ?>/index.php" style="color: #0f172a; font-weight: 600; font-size: 14px;">Home</a>
       <a href="#featured-jobs" onclick="setTimeout(function(){ alert('Please log in to your Seeker account to view and apply for jobs.'); }, 500);" style="color: #64748b; font-weight: 500; font-size: 14px;">Jobs</a>
-      <!-- <a href="#categories" style="color: #64748b; font-weight: 500; font-size: 14px;">Categories</a> -->
       <a href="#about" style="color: #64748b; font-weight: 500; font-size: 14px;">About Us</a>
       <a href="#contact" style="color: #64748b; font-weight: 500; font-size: 14px;">Contact</a>
     </nav>
@@ -350,7 +353,7 @@ if (!empty($search_query) && isset($conn)) {
       </div>
       <?php endif; ?>
 
-      <!-- Featured Jobs Grid Cards (Replaced Table with Modern Cards) -->
+      <!-- Featured Jobs Grid Cards -->
       <div style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
         <div>
           <h2 style="margin: 0; font-size: 24px; color: #0f172a; font-weight: 800;">
@@ -364,52 +367,52 @@ if (!empty($search_query) && isset($conn)) {
         <?php endif; ?>
       </div>
 
-<!-- Featured Jobs Anchor Section -->
-<div id="featured-jobs" style="scroll-margin-top: 90px;">
-  <div class="jobs-grid">
-    <?php if (!empty($featured_jobs)) : ?>
-      <?php foreach ($featured_jobs as $fj): ?>
-        <div class="job-card-item">
-          <div>
-            <div class="job-card-header">
-              <div class="company-icon-avatar">
-                <i class="fa-solid fa-building"></i>
-              </div>
-              <div>
-                <h3 class="job-title-text"><?php echo htmlspecialchars($fj['title'] ?? ''); ?></h3>
-                <span class="company-name-text"><?php echo htmlspecialchars($fj['company_name'] ?? 'Company'); ?></span>
-              </div>
-            </div>
+      <!-- Featured Jobs Anchor Section -->
+      <div id="featured-jobs" style="scroll-margin-top: 90px;">
+        <div class="jobs-grid">
+          <?php if (!empty($featured_jobs)) : ?>
+            <?php foreach ($featured_jobs as $fj): ?>
+              <div class="job-card-item">
+                <div>
+                  <div class="job-card-header">
+                    <div class="company-icon-avatar">
+                      <i class="fa-solid fa-building"></i>
+                    </div>
+                    <div>
+                      <h3 class="job-title-text"><?php echo htmlspecialchars($fj['title'] ?? ''); ?></h3>
+                      <span class="company-name-text"><?php echo htmlspecialchars($fj['company_name'] ?? 'Company'); ?></span>
+                    </div>
+                  </div>
 
-            <div class="job-meta-list">
-              <div class="job-meta-item">
-                <i class="fa-solid fa-location-dot" style="color: #3b82f6;"></i>
-                <span><?php echo htmlspecialchars($fj['location'] ?? 'Sri Lanka'); ?></span>
-              </div>
-              <div class="job-meta-item">
-                <span style="background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 6px; font-size: 12px; font-weight: 700;">
-                  <?php echo htmlspecialchars($fj['job_type'] ?? 'Full-time'); ?>
-                </span>
-              </div>
-            </div>
-          </div>
+                  <div class="job-meta-list">
+                    <div class="job-meta-item">
+                      <i class="fa-solid fa-location-dot" style="color: #3b82f6;"></i>
+                      <span><?php echo htmlspecialchars($fj['location'] ?? 'Sri Lanka'); ?></span>
+                    </div>
+                    <div class="job-meta-item">
+                      <span style="background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 6px; font-size: 12px; font-weight: 700;">
+                        <?php echo htmlspecialchars($fj['job_type'] ?? 'Full-time'); ?>
+                      </span>
+                    </div>
+                  </div>
+                </div>
 
-          <div class="job-card-footer">
-            <span class="salary-text"><?php echo htmlspecialchars($fj['salary_range'] ?? $fj['salary'] ?? 'Negotiable'); ?></span>
-            <a href="<?php echo BASE_URL; ?>/auth/login.php" style="padding: 8px 18px; background: #2563eb; color: white; border-radius: 8px; text-decoration: none; font-size: 13px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
-              Apply Now <i class="fa-solid fa-arrow-right" style="font-size: 11px;"></i>
-            </a>
-          </div>
+                <div class="job-card-footer">
+                  <span class="salary-text"><?php echo htmlspecialchars($fj['salary_range'] ?? $fj['salary'] ?? 'Negotiable'); ?></span>
+                  <a href="<?php echo BASE_URL; ?>/auth/login.php" style="padding: 8px 18px; background: #2563eb; color: white; border-radius: 8px; text-decoration: none; font-size: 13px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
+                    Apply Now <i class="fa-solid fa-arrow-right" style="font-size: 11px;"></i>
+                  </a>
+                </div>
+              </div>
+            <?php endforeach; ?>
+          <?php else : ?>
+            <div style="grid-column: 1 / -1; background: white; padding: 40px; text-align: center; border-radius: 12px; border: 1px solid #e2e8f0; color: #64748b;">
+              <i class="fa-solid fa-briefcase" style="font-size: 32px; color: #94a3b8; margin-bottom: 12px; display: block;"></i>
+              No job openings found matching your criteria.
+            </div>
+          <?php endif; ?>
         </div>
-      <?php endforeach; ?>
-    <?php else : ?>
-      <div style="grid-column: 1 / -1; background: white; padding: 40px; text-align: center; border-radius: 12px; border: 1px solid #e2e8f0; color: #64748b;">
-        <i class="fa-solid fa-briefcase" style="font-size: 32px; color: #94a3b8; margin-bottom: 12px; display: block;"></i>
-        No job openings found matching your criteria.
       </div>
-    <?php endif; ?>
-  </div>
-</div>
 
     </div>
   </div>
@@ -418,10 +421,10 @@ if (!empty($search_query) && isset($conn)) {
   <footer class="main-footer">
     <div class="footer-content">
       <div style="font-size: 18px; font-weight: 800; color: white;">
-        JobPortal<span style="color: #38bdf8;">.lk</span>
+        <?php echo htmlspecialchars($site_name); ?>
       </div>
       <div style="font-size: 14px;">
-        &copy; <?php echo date('Y'); ?> <strong>JobPortal.lk</strong>. All rights reserved.
+        &copy; <?php echo date('Y'); ?> <strong><?php echo htmlspecialchars($site_name); ?></strong>. All rights reserved.
       </div>
     </div>
   </footer>

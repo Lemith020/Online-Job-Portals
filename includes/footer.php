@@ -2,6 +2,10 @@
 /**
  * JobPortal.lk - Master Unified Footer
  */
+
+// Database mathi site_name fetch karva maate:
+$sys_settings = function_exists('get_system_settings') ? get_system_settings() : [];
+$site_name = !empty($sys_settings['site_name']) ? $sys_settings['site_name'] : 'JobPortal.lk';
 ?>
 <?php if (!empty($GLOBALS['layout_main_open'])) : ?>
   </main>
@@ -10,7 +14,7 @@
 
 <!-- Global Center Footer -->
 <footer class="site-footer" id="siteFooter">
-  <p>&copy; <?php echo date('Y'); ?> <strong>JobPortal.lk</strong>. All rights reserved. Sri Lanka's Premier Job Network.</p>
+  <p>&copy; <?php echo date('Y'); ?> <strong><?php echo htmlspecialchars($site_name); ?></strong>. All rights reserved. Sri Lanka's Premier Job Network.</p>
 </footer>
 
 <!-- Global UI Controller Scripts -->
