@@ -3,6 +3,8 @@
  * JobPortal.lk - Company Profile Management
  */
 
+// ok
+
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../includes/functions.php';
 
