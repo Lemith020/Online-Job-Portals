@@ -10,7 +10,7 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Kunin ang System Brand Name mula sa Database
+
 $sys_settings = function_exists('get_system_settings') ? get_system_settings() : [];
 $site_name = !empty($sys_settings['site_name']) ? $sys_settings['site_name'] : 'JobPortal.lk';
 
@@ -25,10 +25,12 @@ $search_query = isset($_GET['q']) ? trim($_GET['q']) : '';
 
 if (!empty($search_query) && isset($conn)) {
     $search_safe = mysqli_real_escape_string($conn, $search_query);
+  
     $jobs_sql = "SELECT j.*, c.company_name 
                  FROM jobs j
                  LEFT JOIN company c ON j.company_id = c.company_id
-                 WHERE (j.title LIKE '%$search_safe%' OR c.company_name LIKE '%$search_safe%' OR j.description LIKE '%$search_safe%')
+                 WHERE j.status = 'Approved' 
+                 AND (j.title LIKE '%$search_safe%' OR c.company_name LIKE '%$search_safe%' OR j.description LIKE '%$search_safe%')
                  ORDER BY j.job_id DESC";
     $jobs_res = mysqli_query($conn, $jobs_sql);
     $featured_jobs = [];
@@ -38,9 +40,10 @@ if (!empty($search_query) && isset($conn)) {
         }
     }
 } else {
+  
     $featured_jobs = function_exists('get_all_jobs_admin') ? get_all_jobs_admin('Approved') : [];
     if (empty($featured_jobs) && isset($conn)) {
-        $jobs_res = mysqli_query($conn, "SELECT j.*, c.company_name FROM jobs j LEFT JOIN company c ON j.company_id = c.company_id ORDER BY j.job_id DESC LIMIT 10");
+        $jobs_res = mysqli_query($conn, "SELECT j.*, c.company_name FROM jobs j LEFT JOIN company c ON j.company_id = c.company_id WHERE j.status = 'Approved' ORDER BY j.job_id DESC LIMIT 10");
         if ($jobs_res) {
             while ($row = mysqli_fetch_assoc($jobs_res)) {
                 $featured_jobs[] = $row;
