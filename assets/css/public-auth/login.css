@@ -1,0 +1,138 @@
+/* ---------------------------------------------------------
+   Auth pages shared layout (login / register / forgot-password)
+--------------------------------------------------------- */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: #f4f6f9;
+}
+
+.auth-body {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 400px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    padding: 32px 28px;
+}
+
+.auth-card h2 {
+    text-align: center;
+    font-size: 1.4rem;
+    margin: 0 0 24px;
+    color: #1a1a2e;
+}
+
+.form-group {
+    margin-bottom: 18px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 6px;
+}
+
+.input-icon-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-icon-wrap i:first-child {
+    position: absolute;
+    left: 12px;
+    color: #9aa0a6;
+    font-size: 0.9rem;
+}
+
+.input-icon-wrap input {
+    width: 100%;
+    padding: 10px 12px 10px 36px;
+    border: 1px solid #d9dce1;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.15s ease;
+}
+
+.input-icon-wrap input:focus {
+    border-color: #2f6fed;
+}
+
+.toggle-eye {
+    position: absolute;
+    right: 12px;
+    cursor: pointer;
+    color: #9aa0a6;
+}
+
+.auth-links-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.82rem;
+    margin: 4px 0 20px;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.auth-links-row a {
+    color: #2f6fed;
+    text-decoration: none;
+}
+
+.auth-links-row a:hover {
+    text-decoration: underline;
+}
+
+.btn-primary {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    background: #2f6fed;
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.btn-primary:hover {
+    background: #2559c9;
+}
+
+.form-error {
+    background: #fdecea;
+    color: #b3261e;
+    border: 1px solid #f5c6c2;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    margin-bottom: 16px;
+}
+
+.form-success {
+    background: #eaf7ee;
+    color: #1e7e34;
+    border: 1px solid #c3e6cb;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    margin-bottom: 16px;
+}

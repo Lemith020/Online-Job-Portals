@@ -1,1 +1,170 @@
+<?php
+/**
+ * JobPortal.lk - Portal Login Authentication
+ */
 
+require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../includes/functions.php';
+
+// If already logged in, redirect based on role
+if (isset($_SESSION['user']) && !empty($_SESSION['user']['role'])) {
+    if ($_SESSION['user']['role'] === 'admin') {
+        header('Location: ' . BASE_URL . '/admin/dashboard.php');
+        exit;
+    } elseif ($_SESSION['user']['role'] === 'company') {
+        header('Location: ' . BASE_URL . '/company/dashboard.php');
+        exit;
+    } else {
+        header('Location: ' . BASE_URL . '/seeker/dashboard.php');
+        exit;
+    }
+}
+
+$error = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $email = trim($_POST['email'] ?? '');
+    $password = trim($_POST['password'] ?? '');
+
+    if (empty($email) || empty($password)) {
+        $error = 'Please enter both your email address and password.';
+    } else {
+        global $conn;
+        $authenticated = false;
+
+        if ($conn) {
+          
+            $stmt = mysqli_prepare($conn, "SELECT user_id, first_name, email, password, role, status FROM users WHERE email = ?");
+            
+            if ($stmt) {
+                mysqli_stmt_bind_param($stmt, "s", $email);
+                mysqli_stmt_execute($stmt);
+                $res = mysqli_stmt_get_result($stmt);
+                
+                if ($user = mysqli_fetch_assoc($res)) {
+                    if (password_verify($password, $user['password'])) {
+                        
+                      
+                        if (isset($user['status']) && strcasecmp($user['status'], 'Suspended') === 0) {
+                            $error = 'Your account has been suspended by Admin. Please contact support.';
+                        } else {
+                            $_SESSION['user'] = [
+                                'id' => $user['user_id'],
+                                'name' => $user['first_name'],
+                                'email' => $user['email'],
+                                'role' => $user['role']
+                            ];
+                            $_SESSION['user_id'] = $user['user_id'];
+                            $_SESSION['role'] = $user['role'];
+
+                            
+                            if ($user['role'] === 'company') {
+                                $comp_check = mysqli_prepare($conn, "SELECT company_id FROM company WHERE user_id = ?");
+                                if ($comp_check) {
+                                    mysqli_stmt_bind_param($comp_check, "i", $user['user_id']);
+                                    mysqli_stmt_execute($comp_check);
+                                    $comp_res = mysqli_stmt_get_result($comp_check);
+                                    if ($comp_row = mysqli_fetch_assoc($comp_res)) {
+                                        $_SESSION['company_id'] = $comp_row['company_id'];
+                                    }
+                                }
+                            }
+
+                            $authenticated = true;
+                        }
+
+                    } else {
+                        $error = 'Invalid email or password.';
+                    }
+                } else {
+                    $error = 'Invalid email or password.';
+                }
+            } else {
+                $error = 'Database Error: ' . mysqli_error($conn);
+            }
+        } else {
+            $error = 'Database connection is not available.';
+        }
+
+        if ($authenticated) {
+            add_activity("User logged in: $email (" . ($_SESSION['user']['role'] ?? 'user') . ")", 'auth');
+            set_flash("Welcome back, " . htmlspecialchars($_SESSION['user']['name']) . "!", 'success');
+            
+            if ($_SESSION['user']['role'] === 'admin') {
+                header('Location: ' . BASE_URL . '/admin/dashboard.php');
+            } elseif ($_SESSION['user']['role'] === 'company') {
+                header('Location: ' . BASE_URL . '/company/dashboard.php');
+            } else {
+                header('Location: ' . BASE_URL . '/seeker/dashboard.php');
+            }
+            exit;
+        }
+    }
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In | JobPortal.lk</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="<?php echo BASE_URL; ?>/assets/css/style.css">
+</head>
+<body class="auth-page-body">
+  <div class="auth-card">
+    <div class="text-center mb-4">
+      <a href="<?php echo BASE_URL; ?>/index.php" class="auth-brand">
+        <div class="auth-brand-icon"><i class="fa-solid fa-briefcase"></i></div>
+        <span class="auth-brand-text">JobPortal<span>.lk</span></span>
+      </a>
+      <h1 class="page-title mb-1" style="font-size:22px;">Welcome Back</h1>
+      <p class="text-muted" style="font-size:13.5px;">Sign in to your portal account</p>
+    </div>
+
+    <?php if (function_exists('display_flash')) display_flash(); ?>
+
+    <?php if (!empty($error)): ?>
+      <div class="alert alert-danger mb-4">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <span><?php echo htmlspecialchars($error); ?></span>
+      </div>
+    <?php endif; ?>
+
+    <form method="POST" action="login.php" class="login-form">
+      <div class="form-group mb-3">
+        <label class="form-label">Email Address</label>
+        <div class="input-with-icon">
+          <i class="fa-regular fa-envelope"></i>
+          <input type="email" name="email" class="form-input" placeholder="yourname@gmail.com" required autofocus>
+        </div>
+      </div>
+
+      <div class="form-group mb-3">
+        <div class="flex-between mb-1">
+          <label class="form-label mb-0">Password</label>
+          <a href="forgot-password.php" class="text-primary" style="font-size:13px;">Forgot Password?</a>
+        </div>
+        <div class="input-with-icon">
+          <i class="fa-solid fa-lock"></i>
+          <input type="password" name="password" class="form-input" placeholder="••••••••" required>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-block py-3 mt-4" style="font-size:15px; font-weight:700;">
+        <i class="fa-solid fa-right-to-bracket"></i> Sign In to Portal
+      </button>
+    </form>
+
+    <div class="divider my-4"></div>
+
+    <div class="text-center" style="font-size:14px;">
+      <span class="text-muted">Don't have an account yet?</span>
+      <a href="register.php" class="text-primary font-bold">Create Account</a>
+    </div>
+  </div>
+</body>
+</html>

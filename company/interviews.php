@@ -1,0 +1,248 @@
+<?php
+
+// ok
+require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../includes/functions.php';
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+if (!isset($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'company') {
+    header("Location: " . BASE_URL . "/auth/login.php");
+    exit();
+}
+
+$user_id = $_SESSION['user_id'];
+$company_id = $_SESSION['company_id'] ?? 0;
+
+if ($company_id == 0 && isset($conn) && $conn) {
+    $c_q = mysqli_query($conn, "SELECT company_id FROM company WHERE user_id = $user_id");
+    if ($c_q && $c_row = mysqli_fetch_assoc($c_q)) {
+        $company_id = $c_row['company_id'];
+        $_SESSION['company_id'] = $company_id;
+    }
+}
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['schedule_interview'])) {
+    $app_id = (int) $_POST['app_id'];
+    $interviewer_id = (int) $_POST['interviewer_id'];
+    $interview_date = mysqli_real_escape_string($conn, $_POST['interview_date']);
+    $start_time = mysqli_real_escape_string($conn, $_POST['start_time']);
+    $meeting_link = mysqli_real_escape_string($conn, $_POST['meeting_link']);
+    $notes = mysqli_real_escape_string($conn, $_POST['notes']);
+
+    $sql = "INSERT INTO interviews (app_id, interviewer_id, interview_date, start_time, meeting_link, notes, status)
+            VALUES ($app_id, $interviewer_id, '$interview_date', '$start_time', '$meeting_link', '$notes', 'Scheduled')";
+    mysqli_query($conn, $sql);
+    header("Location: interviews.php");
+    exit;
+}
+
+if (isset($_GET['set_status']) && isset($_GET['interview_id'])) {
+    $new_status = mysqli_real_escape_string($conn, $_GET['set_status']);
+    $interview_id = (int) $_GET['interview_id'];
+    mysqli_query($conn, "UPDATE interviews SET status = '$new_status' WHERE interview_id = $interview_id");
+    header("Location: interviews.php");
+    exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_interviewer'])) {
+    $name = mysqli_real_escape_string($conn, $_POST['interviewer_name']);
+    $contact = mysqli_real_escape_string($conn, $_POST['contact_number']);
+    mysqli_query($conn, "INSERT INTO interviewer (company_id, interviewer_name, contact_number) VALUES ($company_id, '$name', '$contact')");
+    header("Location: interviews.php");
+    exit;
+}
+
+if (isset($_GET['delete_interviewer'])) {
+    $id = (int) $_GET['delete_interviewer'];
+    mysqli_query($conn, "DELETE FROM interviewer WHERE interviewer_id = $id AND company_id = $company_id");
+    header("Location: interviews.php");
+    exit;
+}
+
+$page_title = "Interviews";
+$active_page = "interviews";
+
+require_once __DIR__ . '/../includes/header.php';
+require_once __DIR__ . '/../includes/company-sidebar.php';
+
+$interviews_sql = "SELECT i.*, u.first_name, u.last_name, j.title AS job_title, iv.interviewer_name
+                    FROM interviews i
+                    JOIN applications a ON i.app_id = a.app_id
+                    JOIN job_seekers s ON a.seeker_id = s.seeker_id
+                    JOIN users u ON s.user_id = u.user_id
+                    JOIN jobs j ON a.job_id = j.job_id
+                    JOIN interviewer iv ON i.interviewer_id = iv.interviewer_id
+                    WHERE j.company_id = $company_id
+                    ORDER BY i.interview_date DESC, i.start_time DESC";
+$interviews_result = $conn ? mysqli_query($conn, $interviews_sql) : false;
+
+$interviewers_result = $conn ? mysqli_query($conn, "SELECT * FROM interviewer WHERE company_id = $company_id ORDER BY interviewer_name") : false;
+
+$preselect_app = isset($_GET['app_id']) ? (int) $_GET['app_id'] : 0;
+$eligible_apps_sql = "SELECT a.app_id, u.first_name, u.last_name, j.title AS job_title
+                       FROM applications a
+                       JOIN job_seekers s ON a.seeker_id = s.seeker_id
+                       JOIN users u ON s.user_id = u.user_id
+                       JOIN jobs j ON a.job_id = j.job_id
+                       WHERE j.company_id = $company_id AND a.status IN ('reviewed','accepted')
+                       ORDER BY a.apply_date DESC";
+$eligible_apps_result = $conn ? mysqli_query($conn, $eligible_apps_sql) : false;
+?>
+
+<main class="main-content">
+    <div class="page-header">
+        <h1>Scheduled Interviews</h1>
+        <button class="btn btn-primary" onclick="openInterviewModal()">
+            <i class="fa-solid fa-plus"></i> Schedule New Interview
+        </button>
+    </div>
+
+    <div class="interviews-layout" style="display:grid; grid-template-columns: 2fr 1fr; gap:20px;">
+        <div class="interviews-list">
+            <?php if ($interviews_result && mysqli_num_rows($interviews_result) > 0) : ?>
+                <?php while ($iv = mysqli_fetch_assoc($interviews_result)) : ?>
+                <div class="list-item">
+                    <div>
+                        <div class="list-item-title"><?php echo htmlspecialchars(($iv['first_name'] ?? '') . ' ' . ($iv['last_name'] ?? '')); ?></div>
+                        <div class="list-item-meta">
+                            <span><i class="fa-solid fa-briefcase"></i> <?php echo htmlspecialchars($iv['job_title'] ?? ''); ?></span>
+                            <span><i class="fa-solid fa-user-tie"></i> <?php echo htmlspecialchars($iv['interviewer_name'] ?? ''); ?></span>
+                            <span><i class="fa-solid fa-calendar"></i> <?php echo date('d/m/Y', strtotime($iv['interview_date'] ?? 'now')); ?> <?php echo date('h:i A', strtotime($iv['start_time'] ?? 'now')); ?></span>
+                        </div>
+                    </div>
+
+                    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                        <span class="badge badge-<?php echo strtolower($iv['status'] ?? 'scheduled'); ?>"><?php echo $iv['status'] ?? 'Scheduled'; ?></span>
+
+                        <?php if (($iv['status'] ?? '') == 'Scheduled') : ?>
+                        <a href="interviews.php?set_status=Completed&interview_id=<?php echo $iv['interview_id']; ?>" class="btn btn-outline btn-sm">
+                            <i class="fa-solid fa-check"></i> Mark Completed
+                        </a>
+                        <a href="interviews.php?set_status=Cancelled&interview_id=<?php echo $iv['interview_id']; ?>" class="btn btn-danger-outline btn-sm" onclick="return confirm('Cancel this interview?');">
+                            <i class="fa-solid fa-xmark"></i> Cancel
+                        </a>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <?php endwhile; ?>
+            <?php else : ?>
+                <div class="card empty-state">No interviews scheduled yet.</div>
+            <?php endif; ?>
+        </div>
+
+        <div class="interviewers-panel card">
+            <h2 style="margin-bottom:14px; font-size:18px;">Manage Interviewers</h2>
+
+            <?php if ($interviewers_result && mysqli_num_rows($interviewers_result) > 0) : ?>
+                <?php mysqli_data_seek($interviewers_result, 0); ?>
+                <?php while ($intv = mysqli_fetch_assoc($interviewers_result)) : ?>
+                <div class="interviewer-row" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid var(--border);">
+                    <div>
+                        <p class="interviewer-name" style="font-weight:600; margin:0;"><?php echo htmlspecialchars($intv['interviewer_name']); ?></p>
+                        <p class="interviewer-contact" style="font-size:12px; color:var(--muted); margin:0;"><i class="fa-solid fa-phone"></i> <?php echo htmlspecialchars($intv['contact_number']); ?></p>
+                    </div>
+                    <a href="interviews.php?delete_interviewer=<?php echo $intv['interviewer_id']; ?>" onclick="return confirm('Delete this interviewer?');">
+                        <i class="fa-solid fa-trash" style="color:var(--danger);"></i>
+                    </a>
+                </div>
+                <?php endwhile; ?>
+            <?php else : ?>
+                <p style="color:var(--muted); font-size:13px; margin-bottom:12px;">No interviewers added yet.</p>
+            <?php endif; ?>
+
+            <hr style="border:none; border-top:1px solid var(--border); margin:16px 0;">
+
+            <form method="post" action="interviews.php">
+                <div class="form-group">
+                    <label>Interviewer Name</label>
+                    <input type="text" name="interviewer_name" class="form-control" required placeholder="e.g. John Doe">
+                </div>
+                <div class="form-group">
+                    <label>Contact Number</label>
+                    <input type="text" name="contact_number" class="form-control" required placeholder="e.g. 0771234567">
+                </div>
+                <button type="submit" name="add_interviewer" class="btn btn-primary btn-block btn-sm">
+                    <i class="fa-solid fa-plus"></i> Add Interviewer
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="interviewModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h2>Schedule New Interview</h2>
+                <button class="modal-close" onclick="closeInterviewModal()">&times;</button>
+            </div>
+
+            <form method="post" action="interviews.php">
+                <div class="form-group">
+                    <label>Applicant</label>
+                    <select name="app_id" class="form-control" required>
+                        <option value="">-- Select Applicant --</option>
+                        <?php if ($eligible_apps_result && mysqli_num_rows($eligible_apps_result) > 0) : ?>
+                            <?php while ($ea = mysqli_fetch_assoc($eligible_apps_result)) : ?>
+                            <option value="<?php echo $ea['app_id']; ?>" <?php echo $preselect_app == $ea['app_id'] ? 'selected' : ''; ?>>
+                                <?php echo htmlspecialchars($ea['first_name'] . ' ' . $ea['last_name'] . ' - ' . $ea['job_title']); ?>
+                            </option>
+                            <?php endwhile; ?>
+                        <?php endif; ?>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Interviewer</label>
+                    <select name="interviewer_id" class="form-control" required>
+                        <option value="">-- Select Interviewer --</option>
+                        <?php if ($interviewers_result && mysqli_num_rows($interviewers_result) > 0) : ?>
+                            <?php mysqli_data_seek($interviewers_result, 0); ?>
+                            <?php while ($intv = mysqli_fetch_assoc($interviewers_result)) : ?>
+                            <option value="<?php echo $intv['interviewer_id']; ?>"><?php echo htmlspecialchars($intv['interviewer_name']); ?></option>
+                            <?php endwhile; ?>
+                        <?php endif; ?>
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Date</label>
+                        <input type="date" name="interview_date" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Time</label>
+                        <input type="time" name="start_time" class="form-control" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Meeting Link</label>
+                    <input type="text" name="meeting_link" class="form-control" placeholder="https://meet.google.com/...">
+                </div>
+
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea name="notes" class="form-control" placeholder="Interview instructions or notes..."></textarea>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-outline" onclick="closeInterviewModal()">Cancel</button>
+                    <button type="submit" name="schedule_interview" class="btn btn-primary btn-block">Schedule Interview</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</main>
+
+<script>
+function openInterviewModal() {
+    document.getElementById('interviewModal').classList.add('open');
+}
+function closeInterviewModal() {
+    document.getElementById('interviewModal').classList.remove('open');
+}
+</script>
+
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>

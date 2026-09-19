@@ -1,0 +1,103 @@
+/* ---------------------------------------------------------
+   Register page additions (on top of login.css)
+--------------------------------------------------------- */
+
+.auth-card-wide {
+    max-width: 460px;
+}
+
+/* Role toggle (Job Seeker / Company) */
+.role-toggle {
+    display: flex;
+    background: #f1f3f6;
+    border-radius: 8px;
+    padding: 4px;
+    margin-bottom: 20px;
+}
+
+.role-btn {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 9px 0;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #667085;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.role-btn i {
+    margin-right: 6px;
+}
+
+.role-btn.active {
+    background: #2f6fed;
+    color: #fff;
+}
+
+/* Two-fields-per-row layout (Email/Password, Phone/DOB, Industry/Location) */
+.form-row {
+    display: flex;
+    gap: 14px;
+}
+
+.form-row .form-group {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Textarea styling to match the icon-input look */
+.textarea-wrap {
+    align-items: flex-start;
+}
+
+.textarea-wrap i {
+    top: 12px;
+}
+
+.textarea-wrap textarea {
+    width: 100%;
+    padding: 10px 12px 10px 36px;
+    border: 1px solid #d9dce1;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.15s ease;
+}
+
+.textarea-wrap textarea:focus {
+    border-color: #2f6fed;
+}
+
+/* Role-specific fields, toggled by register.js */
+.role-field-company {
+    display: none;
+}
+
+.auth-footer-link {
+    text-align: center;
+    font-size: 0.85rem;
+    margin-top: 16px;
+    color: #667085;
+}
+
+.auth-footer-link a {
+    color: #2f6fed;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.auth-footer-link a:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 480px) {
+    .form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+}
