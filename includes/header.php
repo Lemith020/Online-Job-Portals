@@ -10,7 +10,10 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-$app_name = defined('APP_NAME') ? APP_NAME : 'JobPortal.lk';
+// ** BADALAAVANE 1: Database ninda site_name matte settings galannu tegedukolluvudu **
+$sys_settings = function_exists('get_system_settings') ? get_system_settings() : [];
+$app_name = !empty($sys_settings['site_name']) ? $sys_settings['site_name'] : (defined('APP_NAME') ? APP_NAME : 'JobPortal.lk');
+
 $page_title_display = isset($page_title) ? $page_title . " | " . $app_name : $app_name;
 
 // Detect active user info dynamically
@@ -88,7 +91,8 @@ if (isset($page_css) && !empty($page_css)) {
       </button>
       <a href="<?php echo $dashboard_url; ?>" class="brand-title">
         <i class="fa-solid fa-briefcase"></i>
-        <span>JobPortal<span>.lk</span></span>
+        <!-- ** BADALAAVANE 2: Dynamic site_name vannu show maaduvudu ** -->
+        <span><?php echo htmlspecialchars($app_name); ?></span>
       </a>
     </div>
     

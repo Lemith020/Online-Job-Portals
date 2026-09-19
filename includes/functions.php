@@ -218,47 +218,54 @@ function get_all_users($role_filter = '', $search = '') {
 /**
  * Update User Status in real DB ('Active' or 'Suspended') across all linked tables
  */
+// 1. User කෙනෙකුගේ Status එක (Active / Suspended) වෙනස් කිරීම
 function toggle_user_status($user_id, $new_status) {
     global $conn;
-    $uid = (int)$user_id;
-
-    if ($uid <= 0) return false;
-
-    if ($new_status === 'Suspended') {
-        // Suspend Company
-        mysqli_query($conn, "UPDATE company SET status = 'suspended' WHERE user_id = $uid");
-        // Suspend Job Seeker
-        mysqli_query($conn, "UPDATE job_seekers SET status = 'suspended' WHERE user_id = $uid");
-    } else {
-        // Activate Company
-        mysqli_query($conn, "UPDATE company SET status = 'approved' WHERE user_id = $uid");
-        // Activate Job Seeker
-        mysqli_query($conn, "UPDATE job_seekers SET status = 'not_hired' WHERE user_id = $uid");
-    }
-
-    return true;
-}
-
-function delete_user($user_id) {
-    global $conn;
-    $uid = (int)$user_id;
-
-    if ($uid <= 0) return false;
-
-    // Delete dependent profile rows first
-    mysqli_query($conn, "DELETE FROM job_seekers WHERE user_id = $uid");
-    mysqli_query($conn, "DELETE FROM company WHERE user_id = $uid");
-
-    // Delete main user row
-    $stmt = mysqli_prepare($conn, "DELETE FROM users WHERE user_id = ?");
-    if ($stmt) {
-        mysqli_stmt_bind_param($stmt, "i", $uid);
-        $success = mysqli_stmt_execute($stmt);
-        mysqli_stmt_close($stmt);
-        return $success;
+    if ($conn) {
+        $sql = "UPDATE users SET status = ? WHERE user_id = ?";
+        $stmt = mysqli_prepare($conn, $sql);
+        if ($stmt) {
+            mysqli_stmt_bind_param($stmt, "si", $new_status, $user_id);
+            $result = mysqli_stmt_execute($stmt);
+            mysqli_stmt_close($stmt);
+            return $result;
+        }
     }
     return false;
 }
+
+// 2. User කෙනෙක්ව Permanent Delete කිරීම
+function delete_user($user_id) {
+    global $conn;
+    if ($conn) {
+        // Child tables වල දත්ත ප්‍රථමයෙන් ඉවත් කිරීම (Foreign Key Issues මගහැරීමට)
+        $stmt1 = mysqli_prepare($conn, "DELETE FROM job_seekers WHERE user_id = ?");
+        if ($stmt1) {
+            mysqli_stmt_bind_param($stmt1, "i", $user_id);
+            mysqli_stmt_execute($stmt1);
+            mysqli_stmt_close($stmt1);
+        }
+
+        $stmt2 = mysqli_prepare($conn, "DELETE FROM company WHERE user_id = ?");
+        if ($stmt2) {
+            mysqli_stmt_bind_param($stmt2, "i", $user_id);
+            mysqli_stmt_execute($stmt2);
+            mysqli_stmt_close($stmt2);
+        }
+
+        // ප්‍රධාන Users table එකෙන් User ව Delete කිරීම
+        $stmt3 = mysqli_prepare($conn, "DELETE FROM users WHERE user_id = ?");
+        if ($stmt3) {
+            mysqli_stmt_bind_param($stmt3, "i", $user_id);
+            $result = mysqli_stmt_execute($stmt3);
+            mysqli_stmt_close($stmt3);
+            return $result;
+        }
+    }
+    return false;
+}
+
+
 
 // -------------------------------------------------------------
 // JOB SEEKER MANAGEMENT
@@ -625,47 +632,40 @@ function save_subscription_plan($plan_name, $price, $duration_days, $plan_id = n
 // -------------------------------------------------------------
 function get_system_settings() {
     global $conn;
-
-    $defaults = [
-        'site_name'  => 'JobPortal.lk',
+    $default_settings = [
+        'site_name' => 'JobPortal.lk',
         'site_email' => 'admin@jobportal.lk'
     ];
 
-    // Check session or database override
-    if (isset($_SESSION['system_settings'])) {
-        return array_merge($defaults, $_SESSION['system_settings']);
-    }
-
-    // Try reading from DB if settings table exists
-    $result = @mysqli_query($conn, "SELECT setting_key, setting_value FROM system_settings");
-    if ($result) {
-        while ($row = mysqli_fetch_assoc($result)) {
-            if (isset($defaults[$row['setting_key']])) {
-                $defaults[$row['setting_key']] = $row['setting_value'];
+    if ($conn) {
+        $result = mysqli_query($conn, "SELECT setting_key, setting_value FROM system_settings");
+        if ($result && mysqli_num_rows($result) > 0) {
+            while ($row = mysqli_fetch_assoc($result)) {
+                $default_settings[$row['setting_key']] = $row['setting_value'];
             }
         }
     }
 
-    return $defaults;
+    return $default_settings;
 }
+
 
 function save_system_settings($data) {
     global $conn;
-
-    // Always update session state for immediate app reactivity
-    $_SESSION['system_settings'] = $data;
-
-    // Attempt DB sync if settings table exists
-    foreach ($data as $key => $val) {
-        $key_clean = mysqli_real_escape_string($conn, $key);
-        $val_clean = mysqli_real_escape_string($conn, $val);
-
-        @mysqli_query($conn, "INSERT INTO system_settings (setting_key, setting_value) 
-                              VALUES ('$key_clean', '$val_clean') 
-                              ON DUPLICATE KEY UPDATE setting_value = '$val_clean'");
+    if ($conn) {
+        foreach ($data as $key => $value) {
+            $stmt = mysqli_prepare($conn, "INSERT INTO system_settings (setting_key, setting_value) 
+                                           VALUES (?, ?) 
+                                           ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)");
+            if ($stmt) {
+                mysqli_stmt_bind_param($stmt, "ss", $key, $value);
+                mysqli_stmt_execute($stmt);
+                mysqli_stmt_close($stmt);
+            }
+        }
+        return true;
     }
-
-    return true;
+    return false;
 }
 
 // -------------------------------------------------------------
