@@ -929,8 +929,16 @@ function get_seeker_id($conn, $user_id) {
                 return $row['seeker_id'];
             }
         }
+
+        // Seeker Record එකක් නැත්නම් Auto Insert කරලා අලුත් seeker_id එක දෙනවා
+        $insert_stmt = mysqli_prepare($conn, "INSERT INTO job_seekers (user_id, status) VALUES (?, 'not_hired')");
+        if ($insert_stmt) {
+            mysqli_stmt_bind_param($insert_stmt, "i", $user_id);
+            mysqli_stmt_execute($insert_stmt);
+            return mysqli_insert_id($conn);
+        }
     }
-    return 1;
+    return null;
 }
 
 // Get Seeker CVs list for my-cv.php
@@ -1124,7 +1132,7 @@ function get_recent_applications($conn, $seeker_id, $limit = 5) {
 // 1o.1. Get Jobs Count for browse-jobs.php pagination
 function get_jobs_count($conn, $search = '', $category = '') {
     if ($conn) {
-        // $search එක array එකක් විදිහට ($filters) ආවොත් ඒකෙන් values ලබාගැනීම
+
         $filters = is_array($search) ? $search : [];
         $keyword  = is_array($search) ? ($filters['keyword'] ?? '') : $search;
         $category = is_array($search) ? ($filters['category'] ?? '') : $category;
@@ -1326,12 +1334,12 @@ function get_jobs($conn, $filters = [], $limit = 5, $offset = 0) {
 function get_categories($conn) {
     $categories = [];
     if ($conn) {
-        // වෙනස් කළ තැන: jobs table එකේ category column එක වෙනුවට categories table එකෙන් IDs සහ Names ලබා ගැනීම
+        
         $sql = "SELECT category_id, category_name FROM categories ORDER BY category_name ASC";
         $res = mysqli_query($conn, $sql);
         if ($res) {
             while ($row = mysqli_fetch_assoc($res)) {
-                $categories[] = $row; // category_id සහ category_name එකතු කරගත් array එකක් ලෙස ලබා දීම
+                $categories[] = $row;
             }
         }
     }
@@ -1469,4 +1477,58 @@ function save_seeker_categories($conn, $seeker_id, $categories) {
         return true;
     }
     return false;
+}
+
+function get_matching_jobs_for_alerts($conn, $seeker_id) {
+    if (empty($seeker_id)) {
+        return [];
+    }
+
+    
+    $sql_alerts = "SELECT suggest_job, location_pref FROM job_alerts WHERE seeker_id = ? AND selects_or_not = 1";
+    $stmt = mysqli_prepare($conn, $sql_alerts);
+    mysqli_stmt_bind_param($stmt, "i", $seeker_id);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    
+    $alerts = [];
+    while ($row = mysqli_fetch_assoc($result)) {
+        $alerts[] = $row;
+    }
+    
+    if (empty($alerts)) {
+        return [];
+    }
+
+
+    $where_clauses = [];
+    foreach ($alerts as $alert) {
+        $keyword = mysqli_real_escape_string($conn, trim($alert['suggest_job']));
+        $location = mysqli_real_escape_string($conn, trim($alert['location_pref']));
+
+        if (!empty($location)) {
+            // Title හෝ Description එකේ Keyword එක තිබීම සහ Location එක Match වීම
+            $where_clauses[] = "((j.title LIKE '%$keyword%' OR j.description LIKE '%$keyword%') AND j.location LIKE '%$location%')";
+        } else {
+            // Location නැත්නම් Keyword එක විතරක් බලනවා
+            $where_clauses[] = "(j.title LIKE '%$keyword%' OR j.description LIKE '%$keyword%')";
+        }
+    }
+
+    $sql_jobs = "SELECT DISTINCT j.* FROM jobs j 
+                 WHERE j.status = 'approved' 
+                 AND j.expiry_date >= CURDATE()
+                 AND (" . implode(" OR ", $where_clauses) . ") 
+                 ORDER BY j.job_id DESC";
+
+    $jobs_result = mysqli_query($conn, $sql_jobs);
+
+    $matching_jobs = [];
+    if ($jobs_result) {
+        while ($job = mysqli_fetch_assoc($jobs_result)) {
+            $matching_jobs[] = $job;
+        }
+    }
+
+    return $matching_jobs;
 }

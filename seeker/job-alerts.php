@@ -30,16 +30,40 @@ if (isset($_GET['delete'])) {
 
 $alerts = get_job_alerts($conn, $seeker_id);
 
+
+$matching_jobs = get_matching_jobs_for_alerts($conn, $seeker_id);
+
 $page_title = "Job Alerts";
 $page_css = "../assets/css/seeker_page_css/job-alerts.css";
-$page_js = "../assets/js/seeker_page_js/job-alerts.js";
 require_once '../includes/seeker-header.php';
 require_once '../includes/seeker-sidebar.php';
 ?>
 
 <h1 class="page-title">Job Alerts</h1>
 
+<div class="card" style="margin-bottom:24px;">
+    <h2>🔔 Matching Job Alerts</h2>
+    <div class="job-matches-list" style="margin-top: 15px;">
+    <?php if (!empty($matching_jobs)): ?>
+        <?php foreach ($matching_jobs as $job): ?>
+            <div class="job-match-item" style="border-bottom: 1px solid #ddd; padding: 12px 0; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h3 style="margin: 0; font-size: 18px;"><?= clean($job['title']) ?></h3>
+                    <div style="color: #666; font-size: 14px;">📍 <?= clean($job['location']) ?> | 🕒 <?= clean($job['job_type']) ?></div>
+                    <small style="color: #888;">Posted on: <?= clean($job['posted_date']) ?></small>
+                </div>
+                <a href="browse-jobs.php?id=<?= $job['job_id'] ?>" class="btn btn-primary">View Job</a>
+            </div>
+        <?php endforeach; ?>
+    <?php else: ?>
+        <p style="color: #777;">No jobs matching your alerts have been posted yet.</p>
+    <?php endif; ?>
+    </div>
+</div>
+
+<!-- My Saved Alerts Section -->
 <div class="card" style="margin-bottom:16px;">
+    <h3>My Alert Preferences</h3>
     <div class="alert-list">
     <?php if ($alerts): ?>
         <?php foreach ($alerts as $alert): ?>
@@ -58,14 +82,14 @@ require_once '../includes/seeker-sidebar.php';
             </div>
         <?php endforeach; ?>
     <?php else: ?>
-        <p>No job alerts yet.</p>
+        <p>No job alerts set yet.</p>
     <?php endif; ?>
     </div>
 </div>
 
 <div class="card">
     <button type="button" class="btn btn-primary" onclick="toggleForm()">+ Add New Alert</button>
-    <form method="POST" id="alert-form" class="add-alert-form">
+    <form method="POST" id="alert-form" class="add-alert-form" style="display: none; margin-top: 15px;">
         <div class="form-row">
             <div class="form-group">
                 <label>Job Keyword</label>
@@ -76,8 +100,21 @@ require_once '../includes/seeker-sidebar.php';
                 <input type="text" name="location_pref" placeholder="e.g. Colombo">
             </div>
         </div>
-        <button type="submit" name="add_alert" class="btn btn-primary">Save</button>
+        <button type="submit" name="add_alert" class="btn btn-primary" style="margin-top: 10px;">Save</button>
     </form>
 </div>
+
+<script>
+function toggleForm() {
+    var form = document.getElementById("alert-form");
+    if (form) {
+        if (form.style.display === "none" || form.style.display === "") {
+            form.style.display = "block";
+        } else {
+            form.style.display = "none";
+        }
+    }
+}
+</script>
 
 <?php require_once '../includes/footer.php'; ?>
