@@ -17,10 +17,10 @@ $site_name = !empty($sys_settings['site_name']) ? $sys_settings['site_name'] : '
 $role = $_SESSION['role'] ?? 'guest';
 $user_name = $_SESSION['user_name'] ?? ($_SESSION['first_name'] ?? '');
 
-// Fetch Categories
+
 $categories = function_exists('get_all_categories_admin') ? get_all_categories_admin() : [];
 
-// Search Filter Logic
+
 $search_query = isset($_GET['q']) ? trim($_GET['q']) : '';
 
 if (!empty($search_query) && isset($conn)) {
