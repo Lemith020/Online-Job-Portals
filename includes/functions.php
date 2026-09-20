@@ -1106,8 +1106,8 @@ function get_recent_applications($conn, $seeker_id, $limit = 5) {
     if ($conn) {
         $sql = "SELECT j.title, c.company_name, a.apply_date, a.status 
                 FROM applications a 
-                LEFT JOIN jobs j ON a.job_id = j.id 
-                LEFT JOIN companies c ON j.company_id = c.id 
+                LEFT JOIN jobs j ON a.job_id = j.job_id 
+                LEFT JOIN company c ON j.company_id = c.company_id 
                 WHERE a.seeker_id = ? ORDER BY a.app_id DESC LIMIT ?";
         
         
