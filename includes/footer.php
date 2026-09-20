@@ -91,5 +91,26 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+<?php
+// Smart Page JS resolution
+$resolved_page_js = '';
+if (isset($page_js) && !empty($page_js)) {
+    if (strpos($page_js, 'http://') === 0 || strpos($page_js, 'https://') === 0) {
+        $resolved_page_js = $page_js;
+    } elseif (strpos($page_js, '../assets/js/') === 0) {
+        $resolved_page_js = BASE_URL . '/assets/js/' . substr($page_js, 13);
+    } elseif (strpos($page_js, 'assets/js/') === 0) {
+        $resolved_page_js = BASE_URL . '/' . $page_js;
+    } elseif (strpos($page_js, '/') === 0) {
+        $resolved_page_js = BASE_URL . $page_js;
+    } else {
+        $resolved_page_js = BASE_URL . '/assets/js/' . $page_js;
+    }
+}
+?>
+<?php if (!empty($resolved_page_js)) : ?>
+<script src="<?php echo htmlspecialchars($resolved_page_js); ?>"></script>
+<?php endif; ?>
+
 </body>
 </html>

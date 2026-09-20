@@ -56,10 +56,10 @@ if (isset($_GET['delete_cv'])) {
     redirect("my-cv.php");
 }
 
-// ---- subscribe to a plan ----
+// ---- checkout a plan ----
 if (isset($_POST['subscribe_plan'])) {
-    subscribe_to_plan($conn, $user_id, (int)$_POST['plan_id']);
-    redirect("my-cv.php");
+    $plan_id = (int)$_POST['plan_id'];
+    redirect("checkout.php?plan_id=" . $plan_id);
 }
 
 $subscription = get_subscription_status($conn, $user_id);
@@ -74,6 +74,7 @@ require_once '../includes/seeker-sidebar.php';
 ?>
 
 <h1 class="page-title">My CV & Subscription</h1>
+<?php if (isset($_GET['payment_success'])): ?><div class="alert alert-success">Payment successful! Your subscription is now active.</div><?php endif; ?>
 <?php if ($error): ?><div class="alert-error"><?= clean($error) ?></div><?php endif; ?>
 
 <div class="cv-layout">

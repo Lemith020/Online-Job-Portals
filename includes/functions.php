@@ -1059,7 +1059,7 @@ if (!function_exists('get_subscription_status')) {
         $sql = "SELECT us.*, p.plan_name, p.duration_days 
                 FROM user_subscriptions us 
                 JOIN subscription_plans p ON us.plan_id = p.plan_id 
-                WHERE us.user_id = ? AND us.status = 'Active' 
+                WHERE us.user_id = ? AND us.is_active = 1 
                 LIMIT 1";
                 
         $stmt = @mysqli_prepare($conn, $sql);
@@ -1075,7 +1075,7 @@ if (!function_exists('get_subscription_status')) {
                 $end_date = date('Y-m-d', strtotime($start_date . " + $duration_days days"));
 
                 return [
-                    'status' => $row['status'],
+                    'status' => 'Active',
                     'plan_name' => $row['plan_name'],
                     'start_date' => $start_date,
                     'end_date' => $end_date
