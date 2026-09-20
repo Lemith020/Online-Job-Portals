@@ -261,6 +261,27 @@ if (!empty($search_query) && isset($conn)) {
       align-items: center;
       flex-wrap: wrap;
       gap: 15px;
+
+
+    }
+
+              /* Nav Buttons */
+    .nav-btn {
+      padding: 8px 18px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 14px;
+      text-decoration: none;
+      color: #64748b;
+      transition: all 0.2s ease;
+    }
+    .nav-btn:hover {
+      background: #f1f5f9;
+      color: #0f172a;
+    }
+    .nav-btn.active {
+      background: #2563eb;
+      color: #ffffff;
     }
   </style>
 </head>
@@ -275,12 +296,12 @@ if (!empty($search_query) && isset($conn)) {
       </span>
     </a>
 
-    <nav class="public-nav-links" style="display: flex; align-items: center; gap: 24px;">
-      <a href="<?php echo BASE_URL; ?>/index.php" style="color: #0f172a; font-weight: 600; font-size: 14px;">Home</a>
-      <a href="#featured-jobs" onclick="setTimeout(function(){ alert('Please log in to your Seeker account to view and apply for jobs.'); }, 500);" style="color: #64748b; font-weight: 500; font-size: 14px;">Jobs</a>
-      <a href="#about" style="color: #64748b; font-weight: 500; font-size: 14px;">About Us</a>
-      <a href="#contact" style="color: #64748b; font-weight: 500; font-size: 14px;">Contact</a>
-    </nav>
+<nav class="public-nav-links" style="display: flex; align-items: center; gap: 8px;">
+  <a href="<?php echo BASE_URL; ?>/index.php" class="nav-btn active">Home</a>
+  <a href="#featured-jobs" onclick="setActiveNav(this); setTimeout(function(){ alert('Please log in to your Seeker account to view and apply for jobs.'); }, 500);" class="nav-btn">Jobs</a>
+  <a href="<?php echo BASE_URL; ?>/about.php" target="_blank" class="nav-btn">About Us</a>
+  <a href="<?php echo BASE_URL; ?>/contact.php" target="_blank" class="nav-btn">Contact</a>
+</nav>
 
     <div style="display: flex; align-items: center; gap: 12px;">
       <?php if ($role === 'guest'): ?>
@@ -419,6 +440,15 @@ if (!empty($search_query) && isset($conn)) {
 
     </div>
   </div>
+
+  <script>
+  function setActiveNav(clickedEl) {
+    document.querySelectorAll('.nav-btn').forEach(function(btn) {
+      btn.classList.remove('active');
+    });
+    clickedEl.classList.add('active');
+  }
+</script>
 
   <!-- Footer -->
   <footer class="main-footer">
