@@ -17,10 +17,10 @@ $site_name = !empty($sys_settings['site_name']) ? $sys_settings['site_name'] : '
 $role = $_SESSION['role'] ?? 'guest';
 $user_name = $_SESSION['user_name'] ?? ($_SESSION['first_name'] ?? '');
 
-// Fetch Categories
+
 $categories = function_exists('get_all_categories_admin') ? get_all_categories_admin() : [];
 
-// Search Filter Logic
+
 $search_query = isset($_GET['q']) ? trim($_GET['q']) : '';
 
 if (!empty($search_query) && isset($conn)) {
@@ -92,7 +92,7 @@ if (!empty($search_query) && isset($conn)) {
       z-index: 1000;
     }
 
-    /* Hero */
+  
     .hero-section {
       background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
       color: #ffffff;
@@ -141,7 +141,7 @@ if (!empty($search_query) && isset($conn)) {
       padding: 0 20px;
     }
     
-    /* Category Cards Grid */
+  
     .categories-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -163,7 +163,7 @@ if (!empty($search_query) && isset($conn)) {
       border-color: #3b82f6;
     }
     
-    /* Featured Jobs Card Grid Styles */
+
     .jobs-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
@@ -245,7 +245,7 @@ if (!empty($search_query) && isset($conn)) {
       color: #059669;
     }
 
-    /* Footer Fix */
+ 
     .main-footer {
       background: #0f172a;
       color: #94a3b8;
@@ -265,7 +265,7 @@ if (!empty($search_query) && isset($conn)) {
 
     }
 
-              /* Nav Buttons */
+           
     .nav-btn {
       padding: 8px 18px;
       border-radius: 8px;
