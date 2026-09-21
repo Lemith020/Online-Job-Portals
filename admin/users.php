@@ -90,12 +90,7 @@ require_once __DIR__ . '/../includes/navbar.php';
 <div class="page-header">
   <div class="page-title-group">
     <h1 class="page-title">User Management</h1>
-    <p class="page-subtitle">View, search, suspend, or add users across all portal roles.</p>
-  </div>
-  <div class="page-actions">
-    <button type="button" class="btn btn-primary" onclick="openAddUserModal()">
-      <i class="fa-solid fa-user-plus"></i> Add New User
-    </button>
+    <p class="page-subtitle">View, search, suspend, or manage users across all portal roles.</p>
   </div>
 </div>
 
