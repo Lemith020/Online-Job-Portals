@@ -1,4 +1,4 @@
-\<?php
+<?php
 /**
  * JobPortal.lk - System Settings
  */
@@ -33,14 +33,13 @@ require_once __DIR__ . '/../includes/header.php';
 require_once __DIR__ . '/../includes/navbar.php';
 ?>
 
-<!-- Outer Main Wrapper (Correct Layout Alignment) -->
-<div class="main-content" style="margin-top: 60px; margin-left: 240px; padding: 28px; width: calc(100% - 240px); box-sizing: border-box; min-height: calc(100vh - 60px);">
-
-  <!-- Page Header -->
-  <div style="margin-bottom: 24px;">
-    <h1 style="font-size: 24px; font-weight: 800; color: #0f172a; margin: 0;">System Settings</h1>
-    <p style="font-size: 13.5px; color: #64748b; margin-top: 4px;">Manage global portal brand identification and system email configurations.</p>
+<!-- Page Header -->
+<div class="page-header">
+  <div class="page-title-group">
+    <h1 class="page-title">System Settings</h1>
+    <p class="page-subtitle">Manage global portal brand identification and system email configurations.</p>
   </div>
+</div>
 
   <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px;">
     
@@ -120,9 +119,6 @@ require_once __DIR__ . '/../includes/navbar.php';
 
       </div>
     </div>
-
   </div>
-
-</div>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>
