@@ -28,7 +28,7 @@ require_once __DIR__ . '/../includes/navbar.php';
       <span>Review Pending Jobs (<?php echo $metrics['pending_jobs']; ?>)</span>
     </a>
     <a href="<?php echo BASE_URL; ?>/admin/users.php" class="btn btn-primary">
-      <i class="fa-solid fa-user-plus"></i>
+      <i class="fa-solid fa-users"></i>
       <span>Manage Users</span>
     </a>
   </div>
