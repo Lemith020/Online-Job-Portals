@@ -1,250 +1,535 @@
 <?php
-// ok
-require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../includes/functions.php';
+/**
+ * JobPortal.lk - Main Portal Entry Point & Router
+ */
+
+require_once __DIR__ . '/config/database.php';
+require_once __DIR__ . '/includes/functions.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-if (!isset($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'company') {
-    header("Location: " . BASE_URL . "/auth/login.php");
-    exit();
-}
+$sys_settings = function_exists('get_system_settings') ? get_system_settings() : [];
+$site_name = !empty($sys_settings['site_name']) ? $sys_settings['site_name'] : 'JobPortal.lk';
 
-$user_id = $_SESSION['user_id'];
-$company_id = $_SESSION['company_id'] ?? 0;
+$role = $_SESSION['role'] ?? 'guest';
+$user_name = $_SESSION['user_name'] ?? ($_SESSION['first_name'] ?? '');
 
-if ($company_id == 0 && isset($conn) && $conn) {
-    $c_q = mysqli_query($conn, "SELECT company_id FROM company WHERE user_id = $user_id");
-    if ($c_q && $c_row = mysqli_fetch_assoc($c_q)) {
-        $company_id = $c_row['company_id'];
-        $_SESSION['company_id'] = $company_id;
+$categories = function_exists('get_all_categories_admin') ? get_all_categories_admin() : [];
+
+$search_query = isset($_GET['q']) ? trim($_GET['q']) : '';
+
+if (!empty($search_query) && isset($conn)) {
+    $search_safe = mysqli_real_escape_string($conn, $search_query);
+  
+    $jobs_sql = "SELECT j.*, c.company_name 
+                 FROM jobs j
+                 LEFT JOIN company c ON j.company_id = c.company_id
+                 WHERE j.status = 'Approved' 
+                 AND (j.title LIKE '%$search_safe%' OR c.company_name LIKE '%$search_safe%' OR j.description LIKE '%$search_safe%')
+                 ORDER BY j.job_id DESC";
+    $jobs_res = mysqli_query($conn, $jobs_sql);
+    $featured_jobs = [];
+    if ($jobs_res) {
+        while ($row = mysqli_fetch_assoc($jobs_res)) {
+            $featured_jobs[] = $row;
+        }
+    }
+} else {
+    $featured_jobs = function_exists('get_all_jobs_admin') ? get_all_jobs_admin('Approved') : [];
+    if (empty($featured_jobs) && isset($conn)) {
+        $jobs_res = mysqli_query($conn, "SELECT j.*, c.company_name FROM jobs j LEFT JOIN company c ON j.company_id = c.company_id WHERE j.status = 'Approved' ORDER BY j.job_id DESC LIMIT 10");
+        if ($jobs_res) {
+            while ($row = mysqli_fetch_assoc($jobs_res)) {
+                $featured_jobs[] = $row;
+            }
+        }
     }
 }
-
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['schedule_interview'])) {
-    $app_id = (int) $_POST['app_id'];
-    $interviewer_id = (int) $_POST['interviewer_id'];
-    $interview_date = mysqli_real_escape_string($conn, $_POST['interview_date']);
-    $start_time = mysqli_real_escape_string($conn, $_POST['start_time']);
-    $meeting_link = mysqli_real_escape_string($conn, $_POST['meeting_link']);
-    $notes = mysqli_real_escape_string($conn, $_POST['notes']);
-
-    $sql = "INSERT INTO interviews (app_id, interviewer_id, interview_date, start_time, meeting_link, notes, status)
-            VALUES ($app_id, $interviewer_id, '$interview_date', '$start_time', '$meeting_link', '$notes', 'Scheduled')";
-    mysqli_query($conn, $sql);
-    header("Location: interviews.php");
-    exit;
-}
-
-if (isset($_GET['set_status']) && isset($_GET['interview_id'])) {
-    $new_status = mysqli_real_escape_string($conn, $_GET['set_status']);
-    $interview_id = (int) $_GET['interview_id'];
-    mysqli_query($conn, "UPDATE interviews SET status = '$new_status' WHERE interview_id = $interview_id");
-    header("Location: interviews.php");
-    exit;
-}
-
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_interviewer'])) {
-    $name = mysqli_real_escape_string($conn, $_POST['interviewer_name']);
-    $contact = mysqli_real_escape_string($conn, $_POST['contact_number']);
-    mysqli_query($conn, "INSERT INTO interviewer (company_id, interviewer_name, contact_number) VALUES ($company_id, '$name', '$contact')");
-    header("Location: interviews.php");
-    exit;
-}
-
-if (isset($_GET['delete_interviewer'])) {
-    $id = (int) $_GET['delete_interviewer'];
-    mysqli_query($conn, "DELETE FROM interviewer WHERE interviewer_id = $id AND company_id = $company_id");
-    header("Location: interviews.php");
-    exit;
-}
-
-$page_title = "Interviews";
-$active_page = "interviews";
-
-// Cache මඟහරවා ගැනීමට ?v=2 එකතු කර ඇත
-$page_css = BASE_URL . "/assets/css/company_page_css/interviews.css?v=2";
-
-require_once __DIR__ . '/../includes/header.php';
-require_once __DIR__ . '/../includes/company-sidebar.php';
-
-$interviews_sql = "SELECT i.*, u.first_name, u.last_name, j.title AS job_title, iv.interviewer_name
-                    FROM interviews i
-                    JOIN applications a ON i.app_id = a.app_id
-                    JOIN job_seekers s ON a.seeker_id = s.seeker_id
-                    JOIN users u ON s.user_id = u.user_id
-                    JOIN jobs j ON a.job_id = j.job_id
-                    JOIN interviewer iv ON i.interviewer_id = iv.interviewer_id
-                    WHERE j.company_id = $company_id
-                    ORDER BY i.interview_date DESC, i.start_time DESC";
-$interviews_result = $conn ? mysqli_query($conn, $interviews_sql) : false;
-
-$interviewers_result = $conn ? mysqli_query($conn, "SELECT * FROM interviewer WHERE company_id = $company_id ORDER BY interviewer_name") : false;
-
-$preselect_app = isset($_GET['app_id']) ? (int) $_GET['app_id'] : 0;
-$eligible_apps_sql = "SELECT a.app_id, u.first_name, u.last_name, j.title AS job_title
-                       FROM applications a
-                       JOIN job_seekers s ON a.seeker_id = s.seeker_id
-                       JOIN users u ON s.user_id = u.user_id
-                       JOIN jobs j ON a.job_id = j.job_id
-                       WHERE j.company_id = $company_id AND a.status IN ('reviewed','accepted')
-                       ORDER BY a.apply_date DESC";
-$eligible_apps_result = $conn ? mysqli_query($conn, $eligible_apps_sql) : false;
 ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><?php echo htmlspecialchars($site_name); ?> | Sri Lanka's Premier Job Network</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="<?php echo BASE_URL; ?>/assets/css/style.css?v=2">
+  
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background-color: #f8fafc;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    /* Header & Navigation */
+    .public-navbar {
+      background: #ffffff;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .public-nav-links {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
 
-<main class="main-content">
-    <div class="page-header">
-        <h1>Scheduled Interviews</h1>
-        <button class="btn btn-primary" onclick="openInterviewModal()">
-            <i class="fa-solid fa-plus"></i> Schedule New Interview
-        </button>
+    /* Hero Section */
+    .hero-section {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: #ffffff;
+      padding: 50px 16px;
+      text-align: center;
+    }
+    .hero-title {
+      font-size: 32px;
+      font-weight: 800;
+      margin-bottom: 10px;
+      color: #ffffff;
+      letter-spacing: -0.02em;
+    }
+    .hero-subtitle {
+      font-size: 15px;
+      color: #94a3b8;
+      max-width: 600px;
+      margin: 0 auto 24px;
+      line-height: 1.5;
+    }
+    .hero-search-box {
+      background: #ffffff;
+      padding: 6px;
+      border-radius: 12px;
+      max-width: 680px;
+      margin: 0 auto;
+      display: flex;
+      gap: 8px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+      flex-wrap: wrap;
+    }
+    .hero-search-box input {
+      flex: 1;
+      min-width: 200px;
+      border: none;
+      padding: 12px 16px;
+      font-size: 15px;
+      outline: none;
+      color: #1e293b;
+    }
+    .hero-search-btn {
+      padding: 12px 24px;
+      font-size: 15px;
+      font-weight: 700;
+      background: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    /* Layout Containers */
+    .site-wrapper {
+      flex: 1;
+    }
+    .main-container {
+      max-width: 1200px;
+      margin: 32px auto;
+      padding: 0 16px;
+      width: 100%;
+    }
+    
+    /* Categories Grid */
+    .categories-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 36px;
+    }
+    .category-card {
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      text-align: center;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+    .category-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+      border-color: #3b82f6;
+    }
+
+    /* Jobs Grid */
+    .jobs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+    .job-card-item {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.2s ease-in-out;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+    }
+    .job-card-item:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.06);
+      border-color: #2563eb;
+    }
+    .job-card-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+    .company-icon-avatar {
+      width: 46px;
+      height: 46px;
+      border-radius: 10px;
+      background: #f1f5f9;
+      color: #2563eb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 800;
+      flex-shrink: 0;
+      border: 1px solid #e2e8f0;
+    }
+    .job-title-text {
+      font-size: 16px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 2px;
+      line-height: 1.3;
+    }
+    .company-name-text {
+      font-size: 13px;
+      color: #64748b;
+      font-weight: 500;
+    }
+    .job-meta-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      color: #64748b;
+    }
+    .job-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .job-card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 14px;
+      border-top: 1px dashed #e2e8f0;
+      margin-top: auto;
+      gap: 10px;
+    }
+    .salary-text {
+      font-size: 14px;
+      font-weight: 700;
+      color: #059669;
+    }
+
+    /* Footer */
+    .main-footer {
+      background: #0f172a;
+      color: #94a3b8;
+      padding: 24px 16px;
+      margin-top: auto;
+      border-top: 1px solid #1e293b;
+    }
+    .footer-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+           
+    .nav-btn {
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 13.5px;
+      text-decoration: none;
+      color: #64748b;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+    .nav-btn:hover {
+      background: #f1f5f9;
+      color: #0f172a;
+    }
+    .nav-btn.active {
+      background: #2563eb;
+      color: #ffffff;
+    }
+
+    /* Mobile Responsive Overhauls */
+    @media (max-width: 768px) {
+      .public-navbar {
+        padding: 12px 16px;
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .public-nav-links {
+        justify-content: center;
+      }
+      .hero-title {
+        font-size: 26px;
+      }
+      .hero-section {
+        padding: 36px 16px;
+      }
+      .hero-search-box {
+        flex-direction: column;
+        background: transparent;
+        box-shadow: none;
+        padding: 0;
+        gap: 10px;
+      }
+      .hero-search-box input {
+        background: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        padding: 14px;
+      }
+      .hero-search-btn {
+        width: 100%;
+        padding: 14px;
+        border-radius: 8px;
+      }
+      .jobs-grid {
+        grid-template-columns: 1fr;
+      }
+      .categories-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+      }
+      .category-card {
+        padding: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="public-navbar">
+    <a href="<?php echo BASE_URL; ?>/index.php" style="text-decoration: none; display: flex; align-items: center; gap: 10px;">
+      <div style="background: #2563eb; color: white; padding: 8px 12px; border-radius: 8px;"><i class="fa-solid fa-briefcase"></i></div>
+      <span style="color: #0f172a; font-size: 18px; font-weight: 800;">
+        <?php echo htmlspecialchars($site_name); ?>
+      </span>
+    </a>
+
+    <nav class="public-nav-links">
+      <a href="<?php echo BASE_URL; ?>/index.php" class="nav-btn active">Home</a>
+      <a href="#featured-jobs" onclick="setActiveNav(this);" class="nav-btn">Jobs</a>
+      <a href="<?php echo BASE_URL; ?>/about.php" target="_blank" class="nav-btn">About Us</a>
+      <a href="<?php echo BASE_URL; ?>/contact.php" target="_blank" class="nav-btn">Contact</a>
+    </nav>
+
+    <div style="display: flex; align-items: center; gap: 10px; justify-content: flex-end; flex-wrap: wrap;">
+      <?php if ($role === 'guest'): ?>
+        <a href="<?php echo BASE_URL; ?>/auth/login.php" class="btn btn-outline btn-sm" style="padding: 8px 16px; border-radius: 8px; font-weight: 600;">
+          Login
+        </a>
+        <a href="<?php echo BASE_URL; ?>/auth/register.php" class="btn btn-primary btn-sm" style="padding: 8px 16px; border-radius: 8px; font-weight: 600;">
+          Register
+        </a>
+      <?php else: ?>
+        <span style="font-size: 13px; color: #64748b; white-space: nowrap;">Hi, <strong><?php echo htmlspecialchars($user_name); ?></strong></span>
+        <?php if ($role === 'admin'): ?>
+          <a href="<?php echo BASE_URL; ?>/admin/dashboard.php" class="btn btn-primary btn-sm" style="padding: 8px 14px;">
+            <i class="fa-solid fa-gauge-high"></i> Admin
+          </a>
+        <?php elseif ($role === 'company'): ?>
+          <a href="<?php echo BASE_URL; ?>/company/dashboard.php" class="btn btn-primary btn-sm" style="padding: 8px 14px;">
+            <i class="fa-solid fa-building"></i> Portal
+          </a>
+        <?php else: ?>
+          <a href="<?php echo BASE_URL; ?>/seeker/dashboard.php" class="btn btn-primary btn-sm" style="padding: 8px 14px;">
+            <i class="fa-solid fa-user"></i> Portal
+          </a>
+        <?php endif; ?>
+        <a href="<?php echo BASE_URL; ?>/auth/logout.php" class="btn btn-outline btn-sm" style="padding: 8px 14px;">Logout</a>
+      <?php endif; ?>
     </div>
+  </header>
 
-    <div class="interviews-layout">
-        <div class="interviews-list">
-            <?php if ($interviews_result && mysqli_num_rows($interviews_result) > 0) : ?>
-                <?php while ($iv = mysqli_fetch_assoc($interviews_result)) : ?>
-                <div class="list-item">
-                    <div>
-                        <div class="list-item-title"><?php echo htmlspecialchars(($iv['first_name'] ?? '') . ' ' . ($iv['last_name'] ?? '')); ?></div>
-                        <div class="list-item-meta">
-                            <span><i class="fa-solid fa-briefcase"></i> <?php echo htmlspecialchars($iv['job_title'] ?? ''); ?></span>
-                            <span><i class="fa-solid fa-user-tie"></i> <?php echo htmlspecialchars($iv['interviewer_name'] ?? ''); ?></span>
-                            <span><i class="fa-solid fa-calendar"></i> <?php echo date('d/m/Y', strtotime($iv['interview_date'] ?? 'now')); ?> <?php echo date('h:i A', strtotime($iv['start_time'] ?? 'now')); ?></span>
-                        </div>
-                    </div>
-
-                    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-                        <span class="badge badge-<?php echo strtolower($iv['status'] ?? 'scheduled'); ?>"><?php echo $iv['status'] ?? 'Scheduled'; ?></span>
-
-                        <?php if (($iv['status'] ?? '') == 'Scheduled') : ?>
-                        <a href="interviews.php?set_status=Completed&interview_id=<?php echo $iv['interview_id']; ?>" class="btn btn-outline btn-sm">
-                            <i class="fa-solid fa-check"></i> Mark Completed
-                        </a>
-                        <a href="interviews.php?set_status=Cancelled&interview_id=<?php echo $iv['interview_id']; ?>" class="btn btn-danger-outline btn-sm" onclick="return confirm('Cancel this interview?');">
-                            <i class="fa-solid fa-xmark"></i> Cancel
-                        </a>
-                        <?php endif; ?>
-                    </div>
-                </div>
-                <?php endwhile; ?>
-            <?php else : ?>
-                <div class="card empty-state">No interviews scheduled yet.</div>
-            <?php endif; ?>
-        </div>
-
-        <div class="interviewers-panel card">
-            <h2 style="margin-bottom:14px; font-size:18px;">Manage Interviewers</h2>
-
-            <?php if ($interviewers_result && mysqli_num_rows($interviewers_result) > 0) : ?>
-                <?php mysqli_data_seek($interviewers_result, 0); ?>
-                <?php while ($intv = mysqli_fetch_assoc($interviewers_result)) : ?>
-                <div class="interviewer-row">
-                    <div>
-                        <p class="interviewer-name"><?php echo htmlspecialchars($intv['interviewer_name']); ?></p>
-                        <p class="interviewer-contact"><i class="fa-solid fa-phone"></i> <?php echo htmlspecialchars($intv['contact_number']); ?></p>
-                    </div>
-                    <a href="interviews.php?delete_interviewer=<?php echo $intv['interviewer_id']; ?>" onclick="return confirm('Delete this interviewer?');">
-                        <i class="fa-solid fa-trash" style="color:var(--danger);"></i>
-                    </a>
-                </div>
-                <?php endwhile; ?>
-            <?php else : ?>
-                <p style="color:var(--muted); font-size:13px; margin-bottom:12px;">No interviewers added yet.</p>
-            <?php endif; ?>
-
-            <hr style="border:none; border-top:1px solid var(--border); margin:16px 0;">
-
-            <form method="post" action="interviews.php">
-                <div class="form-group">
-                    <label>Interviewer Name</label>
-                    <input type="text" name="interviewer_name" class="form-control" required placeholder="e.g. John Doe">
-                </div>
-                <div class="form-group">
-                    <label>Contact Number</label>
-                    <input type="text" name="contact_number" class="form-control" required placeholder="e.g. 0771234567">
-                </div>
-                <button type="submit" name="add_interviewer" class="btn btn-primary btn-block btn-sm">
-                    <i class="fa-solid fa-plus"></i> Add Interviewer
-                </button>
-            </form>
-        </div>
+  <?php if (function_exists('display_flash')) : ?>
+    <div style="max-width: 1200px; margin: 16px auto 0; padding: 0 16px; width: 100%;">
+      <?php display_flash(); ?>
     </div>
+  <?php endif; ?>
 
-    <div class="modal-overlay" id="interviewModal">
-        <div class="modal-box">
-            <div class="modal-header">
-                <h2>Schedule New Interview</h2>
-                <button class="modal-close" onclick="closeInterviewModal()">&times;</button>
+  <div class="site-wrapper">
+    <!-- Hero Section -->
+    <section class="hero-section">
+      <div style="max-width: 1200px; margin: 0 auto;">
+        <h1 class="hero-title">Discover Sri Lanka's Top Career Opportunities</h1>
+        <p class="hero-subtitle">Connect with verified companies and start the next milestone in your professional journey.</p>
+        
+        <!-- Working Search Form -->
+        <form method="GET" action="index.php" class="hero-search-box">
+          <input type="text" name="q" value="<?php echo htmlspecialchars($search_query); ?>" placeholder="Job title, keywords, or skills..." required>
+          <button type="submit" class="hero-search-btn">
+            <i class="fa-solid fa-magnifying-glass"></i> Search Jobs
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- Content Sections -->
+    <div class="main-container">
+
+      <!-- Categories Section Cards -->
+      <?php if (!empty($categories)) : ?>
+      <div id="categories" style="margin-bottom: 20px; text-align: center;">
+        <h2 style="font-size: 22px; color: #0f172a; margin-bottom: 4px; font-weight: 800;">Explore Popular Job Categories</h2>
+        <p style="color: #64748b; font-size: 13.5px;">Find roles tailored to your specialization</p>
+      </div>
+
+      <div class="categories-grid">
+        <?php foreach (array_slice($categories, 0, 8) as $cat): ?>
+          <div class="category-card">
+            <div style="font-size: 24px; color: #2563eb; margin-bottom: 8px;">
+              <i class="fa-solid fa-<?php echo htmlspecialchars($cat['icon'] ?? 'briefcase'); ?>"></i>
             </div>
+            <h3 style="font-size: 15px; font-weight: 700; color: #0f172a; margin-bottom: 4px;"><?php echo htmlspecialchars($cat['name'] ?? $cat['category_name'] ?? ''); ?></h3>
+            <span style="font-size: 12.5px; color: #64748b;"><?php echo $cat['job_count'] ?? 0; ?> Open Positions</span>
+          </div>
+        <?php endforeach; ?>
+      </div>
+      <?php endif; ?>
 
-            <form method="post" action="interviews.php">
-                <div class="form-group">
-                    <label>Applicant</label>
-                    <select name="app_id" class="form-control" required>
-                        <option value="">-- Select Applicant --</option>
-                        <?php if ($eligible_apps_result && mysqli_num_rows($eligible_apps_result) > 0) : ?>
-                            <?php while ($ea = mysqli_fetch_assoc($eligible_apps_result)) : ?>
-                            <option value="<?php echo $ea['app_id']; ?>" <?php echo $preselect_app == $ea['app_id'] ? 'selected' : ''; ?>>
-                                <?php echo htmlspecialchars($ea['first_name'] . ' ' . $ea['last_name'] . ' - ' . $ea['job_title']); ?>
-                            </option>
-                            <?php endwhile; ?>
-                        <?php endif; ?>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>Interviewer</label>
-                    <select name="interviewer_id" class="form-control" required>
-                        <option value="">-- Select Interviewer --</option>
-                        <?php if ($interviewers_result && mysqli_num_rows($interviewers_result) > 0) : ?>
-                            <?php mysqli_data_seek($interviewers_result, 0); ?>
-                            <?php while ($intv = mysqli_fetch_assoc($interviewers_result)) : ?>
-                            <option value="<?php echo $intv['interviewer_id']; ?>"><?php echo htmlspecialchars($intv['interviewer_name']); ?></option>
-                            <?php endwhile; ?>
-                        <?php endif; ?>
-                    </select>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Date</label>
-                        <input type="date" name="interview_date" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Time</label>
-                        <input type="time" name="start_time" class="form-control" required>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Meeting Link</label>
-                    <input type="text" name="meeting_link" class="form-control" placeholder="https://meet.google.com/...">
-                </div>
-
-                <div class="form-group">
-                    <label>Notes</label>
-                    <textarea name="notes" class="form-control" placeholder="Interview instructions or notes..."></textarea>
-                </div>
-
-                <div class="modal-actions">
-                    <button type="button" class="btn btn-outline" onclick="closeInterviewModal()">Cancel</button>
-                    <button type="submit" name="schedule_interview" class="btn btn-primary btn-block">Schedule Interview</button>
-                </div>
-            </form>
+      <!-- Featured Jobs Grid Cards Header -->
+      <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <div>
+          <h2 style="margin: 0; font-size: 22px; color: #0f172a; font-weight: 800;">
+            <i class="fa-solid fa-fire" style="color: #2563eb; margin-right: 6px;"></i> 
+            <?php echo !empty($search_query) ? 'Search Results for "' . htmlspecialchars($search_query) . '"' : 'Featured Jobs'; ?>
+          </h2>
+          <p style="color: #64748b; font-size: 13.5px; margin-top: 2px;">Explore latest verified career opportunities</p>
         </div>
+        <?php if (!empty($search_query)) : ?>
+          <a href="index.php" style="font-size: 13.5px; color: #ef4444; text-decoration: none; font-weight: 600;"><i class="fa-solid fa-xmark"></i> Clear Search</a>
+        <?php endif; ?>
+      </div>
+
+      <!-- Featured Jobs Anchor Section -->
+      <div id="featured-jobs" style="scroll-margin-top: 90px;">
+        <div class="jobs-grid">
+          <?php if (!empty($featured_jobs)) : ?>
+            <?php foreach ($featured_jobs as $fj): ?>
+              <div class="job-card-item">
+                <div>
+                  <div class="job-card-header">
+                    <div class="company-icon-avatar">
+                      <i class="fa-solid fa-building"></i>
+                    </div>
+                    <div>
+                      <h3 class="job-title-text"><?php echo htmlspecialchars($fj['title'] ?? ''); ?></h3>
+                      <span class="company-name-text"><?php echo htmlspecialchars($fj['company_name'] ?? 'Company'); ?></span>
+                    </div>
+                  </div>
+
+                  <div class="job-meta-list">
+                    <div class="job-meta-item">
+                      <i class="fa-solid fa-location-dot" style="color: #3b82f6;"></i>
+                      <span><?php echo htmlspecialchars($fj['location'] ?? 'Sri Lanka'); ?></span>
+                    </div>
+                    <div class="job-meta-item">
+                      <span style="background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 6px; font-size: 12px; font-weight: 700;">
+                        <?php echo htmlspecialchars($fj['job_type'] ?? 'Full-time'); ?>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="job-card-footer">
+                  <span class="salary-text"><?php echo htmlspecialchars($fj['salary_range'] ?? $fj['salary'] ?? 'Negotiable'); ?></span>
+                  <?php if ($role === 'seeker'): ?>
+                    <a href="<?php echo BASE_URL; ?>/seeker/jobs.php" style="padding: 8px 16px; background: #2563eb; color: white; border-radius: 8px; text-decoration: none; font-size: 13px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
+                      Apply Now <i class="fa-solid fa-arrow-right" style="font-size: 11px;"></i>
+                    </a>
+                  <?php else: ?>
+                    <a href="<?php echo BASE_URL; ?>/auth/login.php" style="padding: 8px 16px; background: #2563eb; color: white; border-radius: 8px; text-decoration: none; font-size: 13px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;" onclick="alert('Please log in to your Seeker account to view and apply for jobs.');">
+                      Apply Now <i class="fa-solid fa-arrow-right" style="font-size: 11px;"></i>
+                    </a>
+                  <?php endif; ?>
+                </div>
+              </div>
+            <?php endforeach; ?>
+          <?php else : ?>
+            <div style="grid-column: 1 / -1; background: white; padding: 36px 20px; text-align: center; border-radius: 12px; border: 1px solid #e2e8f0; color: #64748b;">
+              <i class="fa-solid fa-briefcase" style="font-size: 30px; color: #94a3b8; margin-bottom: 10px; display: block;"></i>
+              No job openings found matching your criteria.
+            </div>
+          <?php endif; ?>
+        </div>
+      </div>
+
     </div>
-</main>
+  </div>
 
-<script>
-function openInterviewModal() {
-    document.getElementById('interviewModal').classList.add('open');
-}
-function closeInterviewModal() {
-    document.getElementById('interviewModal').classList.remove('open');
-}
-</script>
+  <script>
+  function setActiveNav(clickedEl) {
+    document.querySelectorAll('.nav-btn').forEach(function(btn) {
+      btn.classList.remove('active');
+    });
+    clickedEl.classList.add('active');
+  }
+  </script>
 
-<?php require_once __DIR__ . '/../includes/footer.php'; ?>
+  <!-- Footer -->
+  <footer class="main-footer">
+    <div class="footer-content">
+      <div style="font-size: 16px; font-weight: 800; color: white;">
+        <?php echo htmlspecialchars($site_name); ?>
+      </div>
+      <div style="font-size: 13.5px;">
+        &copy; <?php echo date('Y'); ?> <strong><?php echo htmlspecialchars($site_name); ?></strong>. All rights reserved.
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
