@@ -48,25 +48,32 @@ require_once '../includes/seeker-sidebar.php';
 
 <div class="card">
     <h2 class="section-title">Recent Applications</h2>
-    <table>
-        <thead>
-            <tr><th>Job Title</th><th>Company Name</th><th>Application Date</th><th>Status</th></tr>
-        </thead>
-        <tbody>
-        <?php if ($recent_applications): ?>
-            <?php foreach ($recent_applications as $app): ?>
+    <div class="table-responsive">
+        <table class="dash-table">
+            <thead>
                 <tr>
-                    <td><?= clean($app['title']) ?></td>
-                    <td><?= clean($app['company_name']) ?></td>
-                    <td><?= formatDate($app['apply_date']) ?></td>
-                    <td><span class="badge <?= status_badge_class($app['status']) ?>"><?= clean(ucfirst($app['status'])) ?></span></td>
+                    <th>Job Title</th>
+                    <th>Company Name</th>
+                    <th>Application Date</th>
+                    <th>Status</th>
                 </tr>
-            <?php endforeach; ?>
-        <?php else: ?>
-            <tr><td colspan="4">No applications yet.</td></tr>
-        <?php endif; ?>
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+            <?php if ($recent_applications): ?>
+                <?php foreach ($recent_applications as $app): ?>
+                    <tr>
+                        <td><?= clean($app['title']) ?></td>
+                        <td><?= clean($app['company_name']) ?></td>
+                        <td><?= formatDate($app['apply_date']) ?></td>
+                        <td><span class="badge <?= status_badge_class($app['status']) ?>"><?= clean(ucfirst($app['status'])) ?></span></td>
+                    </tr>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <tr><td colspan="4" style="text-align: center; color: #94a3b8; padding: 24px;">No applications yet.</td></tr>
+            <?php endif; ?>
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <?php require_once '../includes/footer.php'; ?>
