@@ -109,15 +109,16 @@
 
 .cv-item {
     display: flex;
-    flex-direction: column; 
-    align-items: flex-start;
+    flex-direction: column;
+    align-items: stretch;
     justify-content: space-between;
     border: 1px solid var(--border);
     border-radius: var(--radius);
     padding: 12px;
-    gap: 12px;
+    gap: 10px;
     background: #fff;
     width: 100%;
+    overflow: hidden; 
 }
 
 .cv-item.active-submitted {
@@ -126,8 +127,10 @@
 }
 
 .cv-name { 
-    font-size: 14px; 
+font-size: 13.5px; 
     font-weight: 600;
+    word-break: break-all;
+    overflow-wrap: break-word;
 }
 
 .cv-date { 
@@ -145,6 +148,11 @@
     justify-content: flex-start;
     border-top: 1px dashed #e2e8f0;
     padding-top: 8px;
+}
+
+.cv-actions .btn {
+    padding: 5px 10px;
+    font-size: 12px;
 }
 
 .cv-note { 
