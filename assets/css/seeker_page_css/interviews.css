@@ -1,10 +1,9 @@
-/* assets/css/seeker-interviews.css */
-
+/* Seeker Interviews Page Responsive Styles */
 .job-company { color: var(--text-muted); }
 .interview-notes { color: var(--text-muted); font-style: italic; }
 .btn-disabled { opacity: 0.5; pointer-events: none; }
 
-.pagination { display: flex; justify-content: center; gap: 6px; margin-top: 18px; }
+.pagination { display: flex; justify-content: center; gap: 6px; margin-top: 18px; flex-wrap: wrap; }
 .pagination a {
   padding: 6px 12px;
   border-radius: var(--radius);
@@ -13,3 +12,55 @@
   font-size: 13px;
 }
 .pagination a.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+
+/* Table Responsive Wrapper for Mobile */
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.dash-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+    text-align: left;
+}
+
+.dash-table th {
+    font-size: 12px;
+    text-transform: uppercase;
+    color: #64748b;
+    padding: 12px 14px;
+    border-bottom: 1px solid #e2e8f0;
+    font-weight: 700;
+    background: #f8fafc;
+    white-space: nowrap;
+}
+
+.dash-table td {
+    padding: 14px;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 13.5px;
+    color: #334155;
+    vertical-align: middle;
+}
+
+.dash-table tr:hover td {
+    background: #f8fafc;
+}
+
+.dash-table tr:last-child td {
+    border-bottom: none;
+}
+
+.badge {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11.5px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+}
