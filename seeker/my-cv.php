@@ -67,7 +67,7 @@ $plans = get_all_plans($conn);
 $cvs = get_seeker_cvs($conn, $seeker_id);
 
 $page_title = "My CV";
-$page_css = "../assets/css/seeker_page_css/my-cv.css";
+$page_css = "../assets/css/seeker_page_css/my-cv.css?v=2"; // Cache මඟහරවා ගැනීමට ?v=2 එකතු කර ඇත
 $page_js = "../assets/js/seeker_page_js/my-cv.js";
 require_once '../includes/seeker-header.php';
 require_once '../includes/seeker-sidebar.php';
@@ -118,11 +118,11 @@ require_once '../includes/seeker-sidebar.php';
         </form>
 
         <?php if ($app_detail): ?>
-            <div style="background: #f0f7ff; border: 1px solid #cce5ff; border-radius: 8px; padding: 15px; margin: 20px 0;">
+            <div class="app-details-box">
                 <h4 style="margin: 0 0 10px 0; color: #004085; font-size: 1rem;">
                     📌 Application Details
                 </h4>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; font-size: 0.9rem;">
+                <div class="app-details-grid">
                     <div>
                         <span style="color: #666; display: block; font-size: 0.8rem;">Job:</span>
                         <strong><?= clean($app_detail['job_title'] ?? 'N/A') ?></strong>
@@ -144,7 +144,7 @@ require_once '../includes/seeker-sidebar.php';
                 </div>
 
                 <?php if (!empty($app_detail['file_path'])): ?>
-                    <div style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed #b8daff; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                    <div class="app-details-footer">
                         <span style="font-size: 0.85rem; color: #333;">
                             <strong>Submitted CV:</strong> <?= clean(basename($app_detail['file_path'])) ?>
                         </span>
@@ -158,23 +158,23 @@ require_once '../includes/seeker-sidebar.php';
         <?php endif; ?>
 
         <!-- CV List -->
-        <div class="cv-list" style="margin-top: 15px;">
+        <div class="cv-list">
         <?php if (!empty($cvs)): ?>
             <?php foreach ($cvs as $i => $cv): ?>
                 <?php 
                     $is_app_cv = ($app_detail && isset($app_detail['cv_id']) && $app_detail['cv_id'] == $cv['cv_id']);
                 ?>
-                <div class="cv-item" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee; <?= $is_app_cv ? 'background: #f8fbff; border-left: 4px solid #007bff;' : '' ?>">
+                <div class="cv-item <?= $is_app_cv ? 'active-submitted' : '' ?>">
                     <div>
-                        <div class="cv-name" style="font-weight: 600;">
+                        <div class="cv-name">
                             📄 <?= clean(basename($cv['file_path'])) ?>
                             <?php if ($is_app_cv): ?>
                                 <span class="badge badge-accepted" style="font-size: 0.75rem; margin-left: 5px;">Submitted</span>
                             <?php endif; ?>
                         </div>
-                        <div class="cv-date" style="font-size: 0.8rem; color: #888;">Uploaded <?= formatDate($cv['uploaded_at']) ?></div>
+                        <div class="cv-date">Uploaded <?= formatDate($cv['uploaded_at']) ?></div>
                     </div>
-                    <div class="cv-actions" style="display: flex; gap: 8px; align-items: center;">
+                    <div class="cv-actions">
                         <a href="<?= clean($cv['file_path']) ?>" download="<?= clean(basename($cv['file_path'])) ?>" class="btn btn-outline" style="padding: 4px 8px; font-size: 0.8rem;">Download</a>
                         <?php if ($i === 0): ?>
                             <span class="badge badge-accepted">Active</span>
@@ -190,7 +190,7 @@ require_once '../includes/seeker-sidebar.php';
         <?php endif; ?>
         </div>
 
-        <p class="cv-note" style="margin-top: 20px; font-size: 0.85rem; color: #777;">Your CV is active only while your subscription is active. If your subscription is inactive, you cannot apply for jobs.</p>
+        <p class="cv-note">Your CV is active only while your subscription is active. If your subscription is inactive, you cannot apply for jobs.</p>
     </div>
 </div>
 
