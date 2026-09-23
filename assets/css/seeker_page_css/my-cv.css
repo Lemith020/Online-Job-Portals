@@ -1,44 +1,132 @@
-/* assets/css/seeker-my-cv.css */
+/* Seeker My CV & Subscription Page Layout */
+.alert-error { 
+    background:#fee2e2; 
+    color:#b91c1c; 
+    padding:10px 14px; 
+    border-radius:var(--radius); 
+    margin-bottom:14px; 
+    font-size:14px; 
+}
 
-.alert-error { background:#fee2e2; color:#b91c1c; padding:10px 14px; border-radius:var(--radius); margin-bottom:14px; font-size:14px; }
+.cv-layout { 
+    display: grid; 
+    grid-template-columns: 1fr 1.4fr; 
+    gap: 16px; 
+    width: 100%;
+}
 
-.cv-layout { display: grid; grid-template-columns: 1fr 1.4fr; gap: 16px; }
-.section-title { font-size: 16px; margin: 0 0 12px; }
+.section-title { 
+    font-size: 16px; 
+    margin: 0 0 12px; 
+}
 
-.plan-name { font-size: 18px; font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
-.plan-dates { font-size: 13px; color: var(--text-muted); margin: 2px 0; }
-.btn-full { width: 100%; margin-top: 12px; }
+.plan-name { 
+    font-size: 18px; 
+    font-weight: 700; 
+    margin-bottom: 8px; 
+    display: flex; 
+    align-items: center; 
+    gap: 8px; 
+    flex-wrap: wrap;
+}
 
-.plan-list { display: none; flex-direction: column; gap: 10px; margin-top: 14px; }
-.plan-list.show { display: flex; }
+.plan-dates { 
+    font-size: 13px; 
+    color: var(--text-muted); 
+    margin: 2px 0; 
+}
+
+.btn-full { 
+    width: 100%; 
+    margin-top: 12px; 
+}
+
+.plan-list { 
+    display: none; 
+    flex-direction: column; 
+    gap: 10px; 
+    margin-top: 14px; 
+}
+
+.plan-list.show { 
+    display: flex; 
+}
+
 .plan-option {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    gap: 10px;
+    flex-wrap: wrap;
 }
-.plan-sub { font-size: 12px; color: var(--text-muted); }
-.plan-price { font-weight: 700; }
 
-.upload-row { display: flex; gap: 10px; margin-bottom: 16px; }
-.upload-row input { flex: 1; }
+.plan-sub { 
+    font-size: 12px; 
+    color: var(--text-muted); 
+}
 
-.cv-list { display: flex; flex-direction: column; gap: 10px; }
+.plan-price { 
+    font-weight: 700; 
+}
+
+.upload-row { 
+    display: flex; 
+    gap: 10px; 
+    margin-bottom: 16px; 
+    flex-wrap: wrap;
+}
+
+.upload-row input { 
+    flex: 1; 
+    min-width: 200px;
+}
+
+.cv-list { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 10px; 
+}
+
 .cv-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    gap: 10px;
+    flex-wrap: wrap;
 }
-.cv-name { font-size: 14px; }
-.cv-date { font-size: 12px; color: var(--text-muted); }
-.cv-actions { display: flex; gap: 8px; align-items: center; }
-.cv-note { font-size: 12px; color: var(--text-muted); margin-top: 12px; }
 
+.cv-name { 
+    font-size: 14px; 
+}
+
+.cv-date { 
+    font-size: 12px; 
+    color: var(--text-muted); 
+}
+
+.cv-actions { 
+    display: flex; 
+    gap: 8px; 
+    align-items: center; 
+    flex-wrap: wrap;
+}
+
+.cv-note { 
+    font-size: 12px; 
+    color: var(--text-muted); 
+    margin-top: 12px; 
+}
+
+/* Mobile & Tablet Responsive Optimization */
 @media (max-width: 800px) {
-  .cv-layout { grid-template-columns: 1fr; }
+    .cv-layout { 
+        grid-template-columns: 1fr !important; /* ෆෝන් වලදී එක යට එක වැටීමට */
+        gap: 14px;
+    }
 }
