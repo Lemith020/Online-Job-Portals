@@ -100,7 +100,7 @@ $eligible_apps_result = $conn ? mysqli_query($conn, $eligible_apps_sql) : false;
         </button>
     </div>
 
-    <div class="interviews-layout" style="display:grid; grid-template-columns: 2fr 1fr; gap:20px;">
+    <div class="interviews-layout">
         <div class="interviews-list">
             <?php if ($interviews_result && mysqli_num_rows($interviews_result) > 0) : ?>
                 <?php while ($iv = mysqli_fetch_assoc($interviews_result)) : ?>
