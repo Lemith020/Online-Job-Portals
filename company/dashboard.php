@@ -1,167 +1,154 @@
-/* Company Dashboard Cards Grid */
-.page-header {
-    margin-bottom: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 16px;
+<?php
+/**
+ * JobPortal.lk - Company Dashboard
+ */
+// ok
+require_once __DIR__ . '/../config/database.php';
+
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
 }
 
-.page-header h1 {
-    font-size: 24px;
-    font-weight: 800;
-    color: #0f172a;
-    margin: 0;
-    letter-spacing: -0.02em;
+// Security Check
+if (!isset($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'company') {
+    header("Location: ../auth/login.php");
+    exit();
 }
 
-.stat-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 20px;
-    margin-bottom: 32px;
-    width: 100%;
-}
+$user_id = $_SESSION['user_id'];
+$company_id = $_SESSION['company_id'] ?? 0;
 
-.card {
-    background: #ffffff;
-    border-radius: 16px;
-    padding: 24px;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-    width: 100%;
-    box-sizing: border-box;
-    margin-bottom: 24px;
-}
 
-.stat-card {
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.stat-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-}
-
-.stat-icon {
-    font-size: 24px;
-    color: #0284c7;
-    margin-bottom: 12px;
-}
-
-.stat-value {
-    font-size: 28px;
-    font-weight: 800;
-    color: #0f172a;
-    line-height: 1;
-}
-
-.stat-label {
-    font-size: 13px;
-    color: #64748b;
-    margin-top: 6px;
-    font-weight: 500;
-}
-
-/* Dashboard Table Responsive Wrapper */
-.table-responsive {
-    width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-}
-
-.dash-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 12px;
-    text-align: left;
-}
-
-.dash-table th {
-    font-size: 12px;
-    text-transform: uppercase;
-    color: #64748b;
-    padding: 12px 14px;
-    border-bottom: 1px solid #e2e8f0;
-    font-weight: 700;
-    background: #f8fafc;
-    white-space: nowrap;
-}
-
-.dash-table td {
-    padding: 14px;
-    border-bottom: 1px solid #e2e8f0;
-    font-size: 13.5px;
-    color: #334155;
-    vertical-align: middle;
-}
-
-.dash-table tr:hover td {
-    background: #f8fafc;
-}
-
-.dash-table tr:last-child td {
-    border-bottom: none;
-}
-
-.badge {
-    padding: 4px 10px;
-    border-radius: 20px;
-    font-size: 11.5px;
-    font-weight: 700;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    white-space: nowrap;
-}
-
-.badge-pending {
-    background: #fef3c7;
-    color: #d97706;
-}
-
-.badge-approved {
-    background: #dcfce7;
-    color: #15803d;
-}
-
-.badge-rejected {
-    background: #fee2e2;
-    color: #b91c1c;
-}
-
-.empty-state {
-    padding: 36px 20px;
-    text-align: center;
-    color: #94a3b8;
-    font-size: 14px;
-}
-
-/* Mobile Responsive Overhauls */
-@media (max-width: 768px) {
-    .stat-grid {
-        grid-template-columns: 1fr;
-        gap: 14px;
-        margin-bottom: 20px;
-    }
-
-    .card {
-        padding: 18px 16px;
-    }
-
-    .page-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 8px;
-    }
-
-    .dash-table th,
-    .dash-table td {
-        padding: 10px 8px;
-        font-size: 12.5px;
+if ($company_id == 0 && isset($conn)) {
+    $c_q = mysqli_query($conn, "SELECT company_id FROM company WHERE user_id = $user_id");
+    if ($c_q && $c_row = mysqli_fetch_assoc($c_q)) {
+        $company_id = $c_row['company_id'];
+        $_SESSION['company_id'] = $company_id;
     }
 }
+
+$page_title = "Dashboard";
+$active_page = "dashboard";
+
+
+$page_css = BASE_URL . "/assets/css/company_page_css/dashboard.css";
+
+require_once __DIR__ . '/../includes/header.php';
+require_once __DIR__ . '/../includes/company-sidebar.php';
+
+$company = ['company_name' => 'Company'];
+$total_jobs = 0;
+$active_jobs = 0;
+$total_applicants = 0;
+$pending_interviews = 0;
+$recent_result = false;
+
+if ($company_id > 0 && isset($conn)) {
+    // 1. Company Name
+    $comp_query = mysqli_query($conn, "SELECT company_name FROM company WHERE company_id = $company_id");
+    if ($comp_query && mysqli_num_rows($comp_query) > 0) {
+        $company = mysqli_fetch_assoc($comp_query);
+    }
+
+    // 2. Total Jobs
+    $res = mysqli_query($conn, "SELECT COUNT(*) AS total FROM jobs WHERE company_id = $company_id");
+    if ($res) {
+        $row = mysqli_fetch_assoc($res);
+        $total_jobs = $row['total'] ?? 0;
+    }
+
+    // 3. Active Jobs
+    $res = mysqli_query($conn, "SELECT COUNT(*) AS total FROM jobs WHERE company_id = $company_id AND status = 'approved' AND expiry_date >= CURDATE()");
+    if ($res) {
+        $row = mysqli_fetch_assoc($res);
+        $active_jobs = $row['total'] ?? 0;
+    }
+
+    // 4. Total Applicants
+    $res = mysqli_query($conn, "SELECT COUNT(*) AS total FROM applications a JOIN jobs j ON a.job_id = j.job_id WHERE j.company_id = $company_id");
+    if ($res) {
+        $row = mysqli_fetch_assoc($res);
+        $total_applicants = $row['total'] ?? 0;
+    }
+
+    // 5. Pending Interviews
+    $res = mysqli_query($conn, "SELECT COUNT(*) AS total FROM interviews i JOIN applications a ON i.app_id = a.app_id JOIN jobs j ON a.job_id = j.job_id WHERE j.company_id = $company_id AND i.status = 'Scheduled'");
+    if ($res) {
+        $row = mysqli_fetch_assoc($res);
+        $pending_interviews = $row['total'] ?? 0;
+    }
+
+    // 6. Recent Applicants
+    $recent_sql = "SELECT a.app_id, j.title, u.first_name, u.last_name, a.apply_date, a.status
+                   FROM applications a
+                   JOIN jobs j ON a.job_id = j.job_id
+                   JOIN job_seekers s ON a.seeker_id = s.seeker_id
+                   JOIN users u ON s.user_id = u.user_id
+                   WHERE j.company_id = $company_id
+                   ORDER BY a.apply_date DESC
+                   LIMIT 5";
+    $recent_result = mysqli_query($conn, $recent_sql);
+}
+?>
+
+<main class="main-content">
+
+<div class="page-header">
+    <h1>Welcome back, <?php echo htmlspecialchars($company['company_name']); ?>!</h1>
+</div>
+
+<div class="stat-grid">
+    <div class="card stat-card">
+        <i class="fa-solid fa-briefcase stat-icon"></i>
+        <span class="stat-value"><?php echo $total_jobs; ?></span>
+        <span class="stat-label">Total Jobs Posted</span>
+    </div>
+    <div class="card stat-card">
+        <i class="fa-solid fa-bolt stat-icon"></i>
+        <span class="stat-value"><?php echo $active_jobs; ?></span>
+        <span class="stat-label">Active Jobs</span>
+    </div>
+    <div class="card stat-card">
+        <i class="fa-solid fa-users stat-icon"></i>
+        <span class="stat-value"><?php echo $total_applicants; ?></span>
+        <span class="stat-label">Total Applicants Received</span>
+    </div>
+    <div class="card stat-card">
+        <i class="fa-solid fa-calendar-days stat-icon"></i>
+        <span class="stat-value"><?php echo $pending_interviews; ?></span>
+        <span class="stat-label">Pending Interviews</span>
+    </div>
+</div>
+
+<div class="card">
+    <h2 style="margin-bottom: 4px;">Recent Applicants</h2>
+    <p style="color: var(--muted); font-size: 13px; margin-bottom: 16px;">Last 5 applicants across all jobs.</p>
+
+    <?php if ($recent_result && mysqli_num_rows($recent_result) > 0) : ?>
+    <table class="dash-table">
+        <thead>
+            <tr>
+                <th>Job Title</th>
+                <th>Applicant Name</th>
+                <th>Applied Date</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php while ($row = mysqli_fetch_assoc($recent_result)) : ?>
+            <tr>
+                <td><?php echo htmlspecialchars($row['title']); ?></td>
+                <td><?php echo htmlspecialchars($row['first_name'] . ' ' . $row['last_name']); ?></td>
+                <td><?php echo date('d/m/Y', strtotime($row['apply_date'])); ?></td>
+                <td><span class="badge badge-<?php echo $row['status']; ?>"><?php echo ucfirst($row['status']); ?></span></td>
+            </tr>
+            <?php endwhile; ?>
+        </tbody>
+    </table>
+    <?php else : ?>
+        <div class="empty-state">No applicants yet.</div>
+    <?php endif; ?>
+</div>
+</main> 
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>
