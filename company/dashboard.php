@@ -126,26 +126,30 @@ if ($company_id > 0 && isset($conn)) {
     <p style="color: var(--muted); font-size: 13px; margin-bottom: 16px;">Last 5 applicants across all jobs.</p>
 
     <?php if ($recent_result && mysqli_num_rows($recent_result) > 0) : ?>
-    <table class="dash-table">
-        <thead>
-            <tr>
-                <th>Job Title</th>
-                <th>Applicant Name</th>
-                <th>Applied Date</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php while ($row = mysqli_fetch_assoc($recent_result)) : ?>
-            <tr>
-                <td><?php echo htmlspecialchars($row['title']); ?></td>
-                <td><?php echo htmlspecialchars($row['first_name'] . ' ' . $row['last_name']); ?></td>
-                <td><?php echo date('d/m/Y', strtotime($row['apply_date'])); ?></td>
-                <td><span class="badge badge-<?php echo $row['status']; ?>"><?php echo ucfirst($row['status']); ?></span></td>
-            </tr>
-            <?php endwhile; ?>
-        </tbody>
-    </table>
+    <!-- මෙන්න මෙතනට table-responsive කියන div එක දාන්න! -->
+    <div class="table-responsive">
+        <table class="dash-table">
+            <thead>
+                <tr>
+                    <th>Job Title</th>
+                    <th>Applicant Name</th>
+                    <th>Applied Date</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php while ($row = mysqli_fetch_assoc($recent_result)) : ?>
+                <tr>
+                    <td><?php echo htmlspecialchars($row['title']); ?></td>
+                    <td><?php echo htmlspecialchars($row['first_name'] . ' ' . $row['last_name']); ?></td>
+                    <td><?php echo date('d/m/Y', strtotime($row['apply_date'])); ?></td>
+                    <td><span class="badge badge-<?php echo $row['status']; ?>"><?php echo ucfirst($row['status']); ?></span></td>
+                </tr>
+                <?php endwhile; ?>
+            </tbody>
+        </table>
+    </div>
+    <!-- </div> මෙතනින් table-responsive එක වහනවා -->
     <?php else : ?>
         <div class="empty-state">No applicants yet.</div>
     <?php endif; ?>
