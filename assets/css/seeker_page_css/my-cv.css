@@ -85,14 +85,19 @@
 
 .upload-row { 
     display: flex; 
+    flex-direction: column; /* ෆෝන් වලදී ඉන්පුට් එකයි බටන් එකයි එක යට එක වැටීමට */
     gap: 10px; 
     margin-bottom: 16px; 
-    flex-wrap: wrap;
+    width: 100%;
+}
+
+.upload-row button {
+    width: 100%;
 }
 
 .upload-row input { 
-    flex: 1; 
-    min-width: 200px;
+    width: 100%;
+    padding: 8px;
 }
 
 .cv-list { 
