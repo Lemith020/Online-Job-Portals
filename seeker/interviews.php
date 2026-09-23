@@ -23,42 +23,50 @@ require_once '../includes/seeker-sidebar.php';
 <h1 class="page-title">My Interviews</h1>
 
 <div class="card">
-    <table>
-        <thead>
-            <tr><th>Job Title</th><th>Company</th><th>Status</th><th>Meeting Link</th><th>Action</th></tr>
-        </thead>
-        <tbody>
-        <?php if ($interviews): ?>
-            <?php foreach ($interviews as $iv): ?>
+    <div class="table-responsive">
+        <table class="dash-table">
+            <thead>
                 <tr>
-                    <td>
-                        <?= formatDate($iv['interview_date']) ?> <?= clean($iv['title']) ?><br>
-                        <small class="job-company">With <?= clean($iv['interviewer_name']) ?> at <?= date('h:i A', strtotime($iv['start_time'])) ?></small>
-                        <?php if ($iv['status'] === 'Completed' && $iv['notes']): ?>
-                            <br><small class="interview-notes">Notes: <?= clean($iv['notes']) ?></small>
-                        <?php endif; ?>
-                    </td>
-                    <td><?= clean($iv['company_name']) ?></td>
-                    <td><span class="badge <?= status_badge_class($iv['status']) ?>"><?= clean($iv['status']) ?></span></td>
-                    <td>
-                        <?php if ($iv['meeting_link']): ?>
-                            <a href="<?= clean($iv['meeting_link']) ?>" target="_blank">View Link ↗</a>
-                        <?php else: ?> - <?php endif; ?>
-                    </td>
-                    <td>
-                        <?php if ($iv['status'] === 'Scheduled' && $iv['meeting_link']): ?>
-                            <a href="<?= clean($iv['meeting_link']) ?>" target="_blank" class="btn btn-primary">Join Meeting</a>
-                        <?php else: ?>
-                            <button class="btn btn-outline" disabled>Join Meeting</button>
-                        <?php endif; ?>
-                    </td>
+                    <th>Job Title</th>
+                    <th>Company</th>
+                    <th>Status</th>
+                    <th>Meeting Link</th>
+                    <th>Action</th>
                 </tr>
-            <?php endforeach; ?>
-        <?php else: ?>
-            <tr><td colspan="5">No interviews scheduled yet.</td></tr>
-        <?php endif; ?>
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+            <?php if ($interviews): ?>
+                <?php foreach ($interviews as $iv): ?>
+                    <tr>
+                        <td>
+                            <?= formatDate($iv['interview_date']) ?> <?= clean($iv['title']) ?><br>
+                            <small class="job-company">With <?= clean($iv['interviewer_name']) ?> at <?= date('h:i A', strtotime($iv['start_time'])) ?></small>
+                            <?php if ($iv['status'] === 'Completed' && $iv['notes']): ?>
+                                <br><small class="interview-notes">Notes: <?= clean($iv['notes']) ?></small>
+                            <?php endif; ?>
+                        </td>
+                        <td><?= clean($iv['company_name']) ?></td>
+                        <td><span class="badge <?= status_badge_class($iv['status']) ?>"><?= clean($iv['status']) ?></span></td>
+                        <td>
+                            <?php if ($iv['meeting_link']): ?>
+                                <a href="<?= clean($iv['meeting_link']) ?>" target="_blank">View Link ↗</a>
+                            <?php else: ?> - <?php endif; ?>
+                        </td>
+                        <td>
+                            <?php if ($iv['status'] === 'Scheduled' && $iv['meeting_link']): ?>
+                                <a href="<?= clean($iv['meeting_link']) ?>" target="_blank" class="btn btn-primary btn-sm">Join Meeting</a>
+                            <?php else: ?>
+                                <button class="btn btn-outline btn-sm" disabled>Join Meeting</button>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <tr><td colspan="5" style="text-align: center; color: #94a3b8; padding: 24px;">No interviews scheduled yet.</td></tr>
+            <?php endif; ?>
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <div class="pagination">
