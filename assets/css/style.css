@@ -1303,7 +1303,7 @@ input:checked + .slider::before {
   margin-top: auto;
 }
 
-/* 16. Responsive Media Queries */
+/* 16. Responsive Media Queries (Mobile Optimized) */
 @media (max-width: 768px) {
   .sidebar,
   .admin-sidebar {
@@ -1326,7 +1326,9 @@ input:checked + .slider::before {
   .main-content,
   .admin-main {
     margin-left: 0 !important;
-    padding: 18px 14px;
+    padding: 12px 10px;
+    width: 100%;
+    overflow-x: hidden;
   }
 
   .form-row,
@@ -1337,13 +1339,41 @@ input:checked + .slider::before {
   .page-header {
     flex-direction: column;
     align-items: flex-start;
+    gap: 12px;
   }
 
   .page-actions {
     width: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .page-actions .btn {
+    width: 100%;
+    text-align: center;
   }
 
   .topnav {
-    padding: 0 16px;
+    padding: 0 12px;
+  }
+
+  .brand-title {
+    font-size: 17px;
+  }
+
+  .table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .dash-table th,
+  .table th,
+  table th,
+  .dash-table td,
+  .table td,
+  table td {
+    padding: 10px 8px;
+    font-size: 12.5px;
   }
 }
