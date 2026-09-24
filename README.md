@@ -49,8 +49,7 @@ An insightful overview metric board providing a snapshot of recruitment performa
 
 ---
 
-## 🚀 Getting Started
-To view or test the employer portal features locally, ensure your backend server and database migrations are fully set up, then navigate to the `/employer/login` route.
+
 
 
 
