@@ -1,7 +1,3 @@
-
-
-
-
 # Employer Portal - Online Job Portal System
 
 Welcome to the **Employer Portal** module of our Online Job Portal system. This platform is designed to streamline the recruitment process for employers, HR managers, and hiring teams, empowering them to find and hire top talent efficiently.
@@ -55,6 +51,64 @@ An insightful overview metric board providing a snapshot of recruitment performa
 
 ## 🚀 Getting Started
 To view or test the employer portal features locally, ensure your backend server and database migrations are fully set up, then navigate to the `/employer/login` route.
+
+# Job Seeker Portal - Online Job Portal System
+
+Welcome to the **Job Seeker Portal** module of our Online Job Portal system. This platform is designed to help job seekers, students, and candidates seamlessly search for career opportunities, manage their profiles, upload CVs, and receive personalized job alerts.
+
+---
+
+## 🌟 Key Features & Overview
+
+Below is an overview of the core features available on the job seeker side, complete with visual previews and brief explanations of their functionalities.
+
+### 1. Seeker Dashboard
+A centralized dashboard providing job seekers with a quick overview of their job application metrics, profile summary, and navigation access.
+
+![Seeker Dashboard Screenshot](images/dashboard.png)
+*Figure 1: The main job seeker dashboard displays quick stats and navigation links for managing jobs and applications.*
+
+### 2. Browse & Search Jobs
+An interactive job listings interface where candidates can explore approved job vacancies, filter by location or job type, and search for specific positions.
+
+![Browse Jobs Screenshot](images/browse_jobs.png)
+*Figure 2: Candidates can view available job opportunities with complete details including salary ranges, location, and job requirements.*
+
+### 3. Profile Management
+Job seekers can personalize and manage their profile details including First Name, Last Name, Date of Birth, Phone Number, Bio, and Category Preferences (e.g., IT, Marketing, Legal).
+
+![My Profile Screenshot](images/profile.png)
+*Figure 3: The Profile Management interface allows candidates to maintain accurate and updated personal and professional information.*
+
+### 4. CV Upload & Management
+A dedicated resume management section allowing candidates to upload, view, and replace their CVs in PDF format for job applications.
+
+![My CV Screenshot](images/cv_management.png)
+*Figure 4: Interface for uploading and managing professional resumes and CV documents.*
+
+### 5. Smart Job Alerts & Preferences
+A customized job alert system where candidates save preferred keywords and locations. Active alerts automatically match and display relevant new job postings under **Matching Job Alerts**, with options to toggle (ON/OFF) or delete alerts.
+
+![Job Alerts Screenshot](images/job_alerts.png)
+*Figure 5: Configure job alert keywords and view real-time matched job postings as soon as they are approved.*
+
+### 6. Application Tracking System
+A dedicated view for tracking the status of all submitted job applications (such as *Pending, Approved, Shortlisted, or Rejected*).
+
+![Applications Screenshot](images/applications.png)
+*Figure 6: Candidate application status tracking board to monitor progress with different employers.*
+
+### 7. Interview Management
+A structured module allowing candidates to track scheduled interview dates, times, and venue/meeting details assigned by employers.
+
+![Interviews Screenshot](images/interviews.png)
+*Figure 7: Manage and view scheduled interview details and updates from recruiters.*
+
+---
+
+## 🚀 Getting Started
+
+To view or test the job seeker portal features locally, ensure your backend server and database migrations are fully set up, then navigate to the `/seeker/dashboard.php` route in your browser.
 
 
 
