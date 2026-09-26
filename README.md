@@ -1,19 +1,4 @@
-# Job Seeker Portal - Online Job Portal System
 
-Welcome to the **Job Seeker Portal** module of our Online Job Portal system. This platform is designed to help candidates seamlessly search for career opportunities, manage their profiles, upload CVs, and receive personalized job alerts.
-
----
-
-## 🌟 Key Features & Overview
-
-Below is an overview of the core features available on the job seeker side, complete with visual previews and brief explanations of their functionalities.
-
-### 1. Seeker Dashboard
-A centralized dashboard providing job seekers with an overview of their job application status, profile summary, and quick access metrics.
-
-```markdown
-![Seeker Dashboard Screenshot](images/dashboard.png)
-*Figure 1: The main job seeker dashboard displays quick stats and access to various features.*
 
 
 
