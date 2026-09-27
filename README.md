@@ -121,6 +121,10 @@ A comprehensive overview board displaying real-time metrics, active user statist
 ### 2. Job Post Approval & Management
 A moderation system allowing administrators to review job vacancies submitted by employers and approve, reject, or delete listings to ensure quality standards.
 
+![Job Approval Screenshot](images/admin_job_approval.png)
+*Figure 2: The job management section allows administrators to inspect details and approve or reject job postings.*
+
+
 
 
 
