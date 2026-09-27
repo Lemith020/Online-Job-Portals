@@ -124,7 +124,28 @@ A moderation system allowing administrators to review job vacancies submitted by
 ![Job Approval Screenshot](images/admin_job_approval.png)
 *Figure 2: The job management section allows administrators to inspect details and approve or reject job postings.*
 
+### 3. User Management (Seekers & Employers)
+A centralized user control module to inspect registered Job Seekers and Employers, view profile details, verify corporate accounts, or suspend non-compliant users.
 
+![User Management Screenshot](images/admin_user_management.png)
+*Figure 3: The user management interface for inspecting, verifying, and managing job seeker and employer accounts.*
 
+### 4. Category & Industry Management
+Full CRUD management for job sectors and categories (e.g., IT, Marketing, Legal, Customer Service) to keep job classifications organized across the platform.
+
+![Category Management Screenshot](images/admin_category_management.png)
+*Figure 4: Interface for adding, updating, and organizing job categories and industries.*
+
+### 5. System Activity & Report Monitoring
+A tracking section to monitor ongoing platform activities including application submissions, job alert triggers, scheduled interviews, and user registrations.
+
+![System Monitoring Screenshot](images/admin_system_monitoring.png)
+*Figure 5: System logs and analytics tracking platform interactions and recruiter activity.*
+
+---
+
+## 🚀 Getting Started
+
+To view or test the admin portal features locally, ensure your backend server and database migrations are fully set up, then navigate to the `/admin/dashboard.php` route in your browser.
 
 
