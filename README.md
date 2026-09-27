@@ -102,6 +102,25 @@ A structured module allowing candidates to track scheduled interview dates, time
 
 To view or test the job seeker portal features locally, ensure your backend server and database migrations are fully set up, then navigate to the `/seeker/dashboard.php` route in your browser.
 
+# Admin Portal - Online Job Portal System
+
+Welcome to the **Admin Portal** module of our Online Job Portal system. This platform provides system administrators with full control over user management, job post approvals, industry category configurations, and overall system monitoring.
+
+---
+
+## 🌟 Key Features & Overview
+
+Below is an overview of the core features available on the admin side, complete with visual previews and brief explanations of their functionalities.
+
+### 1. Admin Analytics Dashboard
+A comprehensive overview board displaying real-time metrics, active user statistics, total applications submitted, and pending approval queues.
+
+![Admin Dashboard Screenshot](images/admin_dashboard.png)
+*Figure 1: The main admin dashboard provides central system statistics and overview metrics.*
+
+### 2. Job Post Approval & Management
+A moderation system allowing administrators to review job vacancies submitted by employers and approve, reject, or delete listings to ensure quality standards.
+
 
 
 
