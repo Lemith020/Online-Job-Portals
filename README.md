@@ -144,8 +144,6 @@ A tracking section to monitor ongoing platform activities including application 
 
 ---
 
-## 🚀 Getting Started
 
-To view or test the admin portal features locally, ensure your backend server and database migrations are fully set up, then navigate to the `/admin/dashboard.php` route in your browser.
 
 
