@@ -3,6 +3,38 @@
 Welcome to the **Landing Page & Index Portal** of our Online Job Portal system. This page serves as the primary gateway for job seekers, employers, and visitors, offering an intuitive entering experience to explore job opportunities, understand platform features, and navigate seamlessly across different portals.
 
 ---
+![Hero Section Screenshot](images/landing_hero.png)
+*Figure 1: The main hero banner with an integrated quick-search bar for instant job discovery.*
+
+### 2. Featured Job Categories
+A grid-based section highlighting primary industry categories (e.g., Software Engineering, Marketing, Finance, Healthcare) along with real-time active job counters for each category.
+
+![Featured Categories Screenshot](images/landing_categories.png)
+*Figure 2: Interactive category cards displaying popular industries and available job counts.*
+
+### 3. Recent & Trending Job Listings
+A live feed displaying the latest approved job vacancies posted by verified employers, complete with job tags, salary ranges, location badges, and direct "Apply Now" or "View Details" actions.
+
+![Recent Jobs Screenshot](images/landing_recent_jobs.png)
+*Figure 3: Featured job listing cards showcasing top and newly published career opportunities.*
+
+### 4. Platform Statistics & Impact Metrics
+An overview section highlighting platform achievements, including total active job postings, registered companies, successful candidate placements, and verified job seekers.
+
+![Platform Metrics Screenshot](images/landing_metrics.png)
+*Figure 4: Real-time platform counter display building trust for both job seekers and recruiters.*
+
+### 5. Seamless Multi-Portal Access & Authentication Gateway
+Clear navigation links and call-to-action (CTA) banners directing users to register or log in under their respective roles—whether as a Job Seeker or an Employer.
+
+![Portal Navigation Screenshot](images/landing_portals.png)
+*Figure 5: Role-selection gateways helping users navigate to Job Seeker, Employer, or Admin portals.*
+
+---
+
+## 🚀 Getting Started
+
+To view or test the main landing page features locally, ensure your local web server (e.g., XAMPP/Apache) and MySQL database are active, then navigate to the root index URL (`/index.php`) in your browser.
 
 ## 🌟 Key Features & Overview
 
