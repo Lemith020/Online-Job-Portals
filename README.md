@@ -143,7 +143,7 @@ A tracking section to monitor ongoing platform activities including application 
 *Figure 5: System logs and analytics tracking platform interactions and recruiter activity.*
 
 ---
-
+l
 
 
 
