@@ -1,3 +1,17 @@
+# Landing Page - Online Job Portal System
+
+Welcome to the **Landing Page & Index Portal** of our Online Job Portal system. This page serves as the primary gateway for job seekers, employers, and visitors, offering an intuitive entering experience to explore job opportunities, understand platform features, and navigate seamlessly across different portals.
+
+---
+
+## 🌟 Key Features & Overview
+
+Below is an overview of the core features and UI components available on the main landing page, complete with visual previews and brief explanations of their functionalities.
+
+### 1. Interactive Hero Section & Quick Search
+A dynamic header section featuring a central search engine that allows users to quickly find open job roles by entering keywords, selecting job categories, or filtering by locations.
+
+
 # Employer Portal - Online Job Portal System
 
 Welcome to the **Employer Portal** module of our Online Job Portal system. This platform is designed to streamline the recruitment process for employers, HR managers, and hiring teams, empowering them to find and hire top talent efficiently.
@@ -143,7 +157,7 @@ A tracking section to monitor ongoing platform activities including application 
 *Figure 5: System logs and analytics tracking platform interactions and recruiter activity.*
 
 ---
-l
+
 
 
 
